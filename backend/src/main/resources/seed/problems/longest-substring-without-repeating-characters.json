@@ -1,0 +1,258 @@
+{
+  "slug": "longest-substring-without-repeating-characters",
+  "externalId": 3,
+  "title": "Longest Substring Without Repeating Characters",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "RECOGNITION",
+  "primaryPattern": "sliding-window",
+  "secondaryPatterns": [
+    "hashing"
+  ],
+  "statement": "Given a string s, return the length of the longest substring without repeating characters.",
+  "constraints": [
+    "1 <= s.length <= 10^5",
+    "s consists of ASCII characters, no special cases"
+  ],
+  "examples": [
+    {
+      "input": "s = \"abcabcbb\"",
+      "output": "3",
+      "explanation": "The longest valid substring is \"abc\", so the answer is 3."
+    },
+    {
+      "input": "s = \"bbbbb\"",
+      "output": "1",
+      "explanation": "The longest valid substring is \"b\", so the answer is 1."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "A substring is a contiguous region, and you are looking for the longest one that satisfies a condition. Which pattern handles that?"
+    },
+    {
+      "level": 2,
+      "content": "Move the right pointer forward one character at a time. When is the window invalid, and which pointer fixes it?"
+    },
+    {
+      "level": 3,
+      "content": "A window is invalid when a character occurs twice inside it. You need counts, not just a set, because you must know where the earlier occurrence is."
+    },
+    {
+      "level": 4,
+      "content": "left = 0\nfor right in range(n):\n    count[s[right]] += 1\n    while count[s[right]] > 1:\n        count[s[left]] -= 1\n        left++\n    best = max(best, right - left + 1)"
+    },
+    {
+      "level": 5,
+      "content": "Use int[256] for ASCII counts, or a HashMap<Character, Integer>. The variant that jumps left directly to lastIndex + 1 is faster but hides the invariant."
+    }
+  ],
+  "pseudocode": [
+    "left = 0",
+    "counts = empty map",
+    "best = 0",
+    "for right from 0 to n - 1:",
+    "    counts[s[right]] = counts[s[right]] + 1",
+    "    while counts[s[right]] > 1:",
+    "        counts[s[left]] = counts[s[left]] - 1",
+    "        left = left + 1",
+    "    best = max(best, right - left + 1)",
+    "return best"
+  ],
+  "timeComplexity": "O(n)",
+  "spaceComplexity": "O(1)",
+  "invariant": "Every character in the current window appears at most once, and left is the smallest index for which that holds.",
+  "whyThisPattern": "The signal is 'contiguous substring + longest + validity'. The window grows to the right one character at a time, and only shrinks when the condition breaks, so each character enters and leaves the window once. That gives O(n) with no rescans, instead of checking every substring.",
+  "bruteForce": "Start at every index and extend to the end while tracking a set: O(n^2) time. At n = 100,000 that is about 10^10 operations. A sliding window touches each character at most twice, so it is 100,000 times faster.",
+  "interviewExplanation": "I maintain a sliding window from left to right together with a count of each character inside it. I extend right, and as soon as a character appears twice I move left forward until the window is valid again. Since left only ever moves forward, every character enters and leaves the window once, giving O(n) time and constant extra space for ASCII input.",
+  "commonMistakes": [
+    "Checking validity before adding the current character, so the duplicate is never detected.",
+    "Shrinking the window only once when several duplicates exist at the same time.",
+    "Using a set instead of counts, which tells you the character repeats but not where the previous copy is."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "s = \"abcabcbb\"",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "label": "All identical",
+      "input": "s = \"bbbbb\"",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "label": "All distinct",
+      "input": "s = \"abcdefg\"",
+      "expectedOutput": "7",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int lengthOfLongestSubstring(String s) {\n        int[] counts = new int[128];\n        int left = 0;\n        int best = 0;\n        for (int right = 0; right < s.length(); right++) {\n            char c = s.charAt(right);\n            counts[c]++;\n            while (counts[c] > 1) {\n                counts[s.charAt(left)]--;\n                left++;\n            }\n            best = Math.max(best, right - left + 1);\n        }\n        return best;\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "Spot the signal",
+      "description": "Contiguous substring, longest one, validity condition.",
+      "text": "The problem asks for the longest contiguous substring in which no character repeats.",
+      "payload": {
+        "lines": [
+          "substring = contiguous",
+          "goal = longest",
+          "valid = no repeats"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "WINDOW",
+      "title": "Expand right",
+      "description": "Add 'a', the window is valid.",
+      "text": "The window is a, with left 0 and right 0. All characters are unique, so it is valid and the length is 1.",
+      "payload": {
+        "values": [
+          "a",
+          "b",
+          "c",
+          "a",
+          "b",
+          "c",
+          "b",
+          "b"
+        ],
+        "left": 0,
+        "right": 0,
+        "valid": true
+      }
+    },
+    {
+      "order": 3,
+      "type": "WINDOW",
+      "title": "Keep expanding",
+      "description": "Add 'b' then 'c', still valid.",
+      "text": "The window is abc with left 0 and right 2. No character repeats, so the length is 3.",
+      "payload": {
+        "values": [
+          "a",
+          "b",
+          "c",
+          "a",
+          "b",
+          "c",
+          "b",
+          "b"
+        ],
+        "left": 0,
+        "right": 2,
+        "valid": true
+      }
+    },
+    {
+      "order": 4,
+      "type": "WINDOW",
+      "title": "Now it breaks",
+      "description": "Adding the second 'a' makes the window invalid.",
+      "text": "The window is abca with left 0 and right 3. The character a appears twice, so the window is invalid.",
+      "payload": {
+        "values": [
+          "a",
+          "b",
+          "c",
+          "a",
+          "b",
+          "c",
+          "b",
+          "b"
+        ],
+        "left": 0,
+        "right": 3,
+        "valid": false
+      }
+    },
+    {
+      "order": 5,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "The window is invalid. Which pointer moves, and in which direction?",
+      "text": "The window is invalid because a repeats. Choose which pointer should move next.",
+      "payload": {
+        "prompt": "Window a b c a is invalid because 'a' repeats. What now?",
+        "options": [
+          "Move right further",
+          "Move left forward",
+          "Move left backward",
+          "Restart from index 0"
+        ],
+        "answerIndex": 1,
+        "explanation": "Shrink from the left until the duplicate leaves the window."
+      }
+    },
+    {
+      "order": 6,
+      "type": "WINDOW",
+      "title": "Shrink left",
+      "description": "left moves to 1, window becomes bca, valid again.",
+      "text": "Left moves from 0 to 1. The window is bca, which is valid, so the length is 3.",
+      "payload": {
+        "values": [
+          "a",
+          "b",
+          "c",
+          "a",
+          "b",
+          "c",
+          "b",
+          "b"
+        ],
+        "left": 1,
+        "right": 3,
+        "valid": true
+      }
+    },
+    {
+      "order": 7,
+      "type": "HASH_MAP",
+      "title": "Counts inside the window",
+      "description": "The counts are what tell you when to stop shrinking.",
+      "text": "The window bca holds b once, c once and a once. The count of a dropped to 1 as soon as left passed the first a.",
+      "payload": {
+        "entries": [
+          {
+            "key": "a",
+            "value": 1
+          },
+          {
+            "key": "b",
+            "value": 1
+          },
+          {
+            "key": "c",
+            "value": 1
+          }
+        ],
+        "lookup": {
+          "key": "a",
+          "found": true
+        }
+      }
+    },
+    {
+      "order": 8,
+      "type": "SUCCESS",
+      "title": "Best window recorded",
+      "description": "The longest valid window seen so far is 'abc', length 3.",
+      "text": "The best window found is abc with length 3, and each character entered and left the window only once.",
+      "payload": {
+        "message": "Longest substring without repeating characters has length 3."
+      }
+    }
+  ]
+}

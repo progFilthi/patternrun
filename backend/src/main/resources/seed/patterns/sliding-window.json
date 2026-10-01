@@ -1,0 +1,28 @@
+{
+  "slug": "sliding-window",
+  "name": "Sliding Window",
+  "difficultyOrder": 2,
+  "summary": "Keep a contiguous region under observation with two pointers: the right pointer extends it, the left pointer shrinks it. Instead of recomputing an answer for every subarray, update the answer while the window moves.",
+  "signal": "contiguous substring/subarray + longest, shortest, maximum, minimum, valid window",
+  "mentalModel": "RIGHT expands. LEFT shrinks. Every step is O(1), never a rescan.",
+  "recognitionRules": [
+    "The problem asks about a contiguous region: substring, subarray, consecutive range.",
+    "The answer is a longest / shortest / largest / smallest such region.",
+    "A window is valid or invalid, and validity can be maintained incrementally.",
+    "You need frequency counts of the elements currently inside the window.",
+    "The naive solution restarts work for each start position."
+  ],
+  "template": [
+    "left = 0",
+    "",
+    "for right in range(n):",
+    "    add element right to the window state",
+    "",
+    "    while window is invalid:",
+    "        remove element left from the window state",
+    "        left++",
+    "",
+    "    update answer with window [left, right]"
+  ],
+  "invariant": "The window is valid after shrinking, and every index strictly before left has already been ruled out for this and all later right positions."
+}

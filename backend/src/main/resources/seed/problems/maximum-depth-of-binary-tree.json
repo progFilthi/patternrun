@@ -1,0 +1,201 @@
+{
+  "slug": "maximum-depth-of-binary-tree",
+  "externalId": 104,
+  "title": "Maximum Depth of Binary Tree",
+  "difficulty": "EASY",
+  "trainingDifficulty": "RECOGNITION",
+  "primaryPattern": "trees",
+  "secondaryPatterns": [],
+  "statement": "Given the root of a binary tree, return its maximum depth. A binary tree's depth is the number of nodes along the longest path from the root node down to the farthest leaf node.",
+  "constraints": [
+    "0 <= number of nodes <= 10^4",
+    "The depth of an empty tree is 0"
+  ],
+  "examples": [
+    {
+      "input": "root = [3, 9, 20, null, null, 15, 7]",
+      "output": "3",
+      "explanation": "The longest path is 3 to 20 to 15, which contains three nodes."
+    },
+    {
+      "input": "root = []",
+      "output": "0",
+      "explanation": "An empty tree has depth 0."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "Ask the recursive question first: if I already knew the depth of both subtrees, what is the depth of the whole tree?"
+    },
+    {
+      "level": 2,
+      "content": "The path must go through one of the two children, so the answer is one plus the deeper child."
+    },
+    {
+      "level": 3,
+      "content": "The deepest path can only be the left path or the right path, so take the maximum of the two."
+    },
+    {
+      "level": 4,
+      "content": "depth(node):\n    if node is null: return 0\n    return 1 + max(depth(node.left), depth(node.right))"
+    },
+    {
+      "level": 5,
+      "content": "Level order traversal with a queue also works: the number of levels is the depth, and the queue size is the width of each level."
+    }
+  ],
+  "pseudocode": [
+    "depth(node):",
+    "    if node is empty:",
+    "        return 0",
+    "    return 1 + max(depth(node.left), depth(node.right))",
+    "return depth(root)"
+  ],
+  "timeComplexity": "O(n)",
+  "spaceComplexity": "O(n)",
+  "invariant": "Every call returns the correct maximum depth of its own subtree, so the parent only has to take the maximum and add itself.",
+  "whyThisPattern": "The tree pattern is about defining the recursive call and combining the results. Depth is the simplest example of that: solve both children, take the larger answer, add one for the current node.",
+  "bruteForce": "Walking every root to leaf path separately is exponential on a balanced tree because the shared upper part is visited again and again. One traversal of the tree is linear.",
+  "interviewExplanation": "I solve the problem recursively: an empty subtree has depth zero, and for a node the maximum depth is one plus the larger depth of its two subtrees. Because each node is visited exactly once, this is linear in the number of nodes, with a recursion stack equal to the tree height.",
+  "commonMistakes": [
+    "Returning 1 for an empty subtree instead of 0, which shifts every result by one.",
+    "Adding one to both children and taking the minimum instead of the maximum.",
+    "Forgetting that the depth counts nodes, so the leaf itself counts as 1."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "root = [3,9,20,null,null,15,7]",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "label": "Empty tree",
+      "input": "root = []",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "label": "Single node",
+      "input": "root = [7]",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int maxDepth(TreeNode root) {\n        if (root == null) return 0;\n        return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TREE",
+      "title": "The tree",
+      "description": "Root 3 with children 9 and 20, and 15 and 7 under 20.",
+      "text": "The tree has root 3, its left child 9, its right child 20, and 15 and 7 as the children of 20.",
+      "payload": {
+        "values": [
+          3,
+          9,
+          20,
+          15,
+          7
+        ],
+        "parents": [
+          -1,
+          0,
+          0,
+          2,
+          2
+        ],
+        "highlight": [
+          0
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "TREE",
+      "title": "Empty subtrees",
+      "description": "An empty subtree has depth 0.",
+      "text": "Node 9 has no children, so its left and right subtrees are empty and each has depth 0.",
+      "payload": {
+        "values": [
+          3,
+          9,
+          20,
+          15,
+          7
+        ],
+        "parents": [
+          -1,
+          0,
+          0,
+          2,
+          2
+        ],
+        "highlight": [
+          1
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "Both subtrees of the root return a depth. Which one wins?",
+      "text": "For the root, the left subtree has depth 1 and the right subtree has depth 2. Choose the combination rule.",
+      "payload": {
+        "prompt": "left depth = 1, right depth = 2. What is the depth of the root?",
+        "options": [
+          "1 + min(1, 2) = 2",
+          "1 + max(1, 2) = 3",
+          "1 + 1 + 2 = 4",
+          "min(1, 2) = 1"
+        ],
+        "answerIndex": 1,
+        "explanation": "The deepest path goes through the deeper subtree, so the answer is one plus the maximum."
+      }
+    },
+    {
+      "order": 4,
+      "type": "TREE",
+      "title": "Combine at the root",
+      "description": "1 + max(1, 2) = 3.",
+      "text": "The depth of the root is one plus the larger child depth, which is one plus two, so three.",
+      "payload": {
+        "values": [
+          3,
+          9,
+          20,
+          15,
+          7
+        ],
+        "parents": [
+          -1,
+          0,
+          0,
+          2,
+          2
+        ],
+        "highlight": [
+          0,
+          2
+        ]
+      }
+    },
+    {
+      "order": 5,
+      "type": "SUCCESS",
+      "title": "Depth is 3",
+      "description": "The longest path is 3 to 20 to 15.",
+      "text": "The maximum depth is 3, found along the path 3, 20, 15.",
+      "payload": {
+        "message": "Maximum depth is 3."
+      }
+    }
+  ]
+}

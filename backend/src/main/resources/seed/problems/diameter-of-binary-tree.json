@@ -1,0 +1,189 @@
+{
+  "slug": "diameter-of-binary-tree",
+  "externalId": 543,
+  "title": "Diameter of Binary Tree",
+  "difficulty": "EASY",
+  "trainingDifficulty": "GUIDED",
+  "primaryPattern": "trees",
+  "secondaryPatterns": [],
+  "statement": "Given the root of a binary tree, return the length of its diameter. The diameter is the number of edges on the longest path between two nodes, which may or may not pass through the root.",
+  "constraints": [
+    "0 <= number of nodes <= 10^4",
+    "The diameter of a tree with a single node is 0"
+  ],
+  "examples": [
+    {
+      "input": "root = [1, 2, 3, 4, 5, null, 7]",
+      "output": "3",
+      "explanation": "The longest path is 4 to 2 to 1 to 3, which uses three edges."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "Depth is easy: one plus the deeper child. The diameter uses the same recursion, but something has to be measured across the node."
+    },
+    {
+      "level": 2,
+      "content": "The longest path through a node goes down its left subtree and up its right subtree, so its length is leftHeight plus rightHeight."
+    },
+    {
+      "level": 3,
+      "content": "Every node is a possible centre of a longest path, so the recursion should keep a running best while returning heights."
+    },
+    {
+      "level": 4,
+      "content": "height(node):\n    if node is null: return 0\n    left = height(node.left)\n    right = height(node.right)\n    best = max(best, left + right)\n    return 1 + max(left, right)"
+    },
+    {
+      "level": 5,
+      "content": "Heights are usually counted in edges, so an empty subtree returns 0 and a single node tree has diameter 0."
+    }
+  ],
+  "pseudocode": [
+    "height(node):",
+    "    if node is empty: return 0",
+    "    left = height(node.left)",
+    "    right = height(node.right)",
+    "    best = max(best, left + right)",
+    "    return 1 + max(left, right)",
+    "call height(root)",
+    "return best"
+  ],
+  "timeComplexity": "O(n)",
+  "spaceComplexity": "O(n)",
+  "invariant": "Each call returns the correct height of its subtree, and best always holds the longest path seen so far in any processed subtree.",
+  "whyThisPattern": "This is the classic case where the tree pattern needs one extra idea: the recursive call returns one value, but the answer is global. The path through the current node is the sum of two child heights, and the maximum over all nodes is the diameter.",
+  "bruteForce": "Checking all pairs of nodes would be O(n^2), and computing the longest path through every node separately is also quadratic. One post-order traversal records every candidate path, so the cost is linear.",
+  "interviewExplanation": "I do a post-order traversal where each call returns the height of its subtree in edges. At each node the longest path passing through that node is the left height plus the right height, so I update a running maximum with that value and return one plus the larger child height. Since every node is visited once, the complexity is O(n) with a recursion stack equal to the height.",
+  "commonMistakes": [
+    "Adding one for the node itself when measuring the diameter, which counts nodes instead of edges.",
+    "Returning a pair of values where the running maximum is needed, and forgetting to carry it back up.",
+    "Only checking the diameter through the root, which misses a longer path deeper in the tree."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "root = [1,2,3,4,5,null,7]",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "label": "Single node",
+      "input": "root = [1]",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "label": "Balanced tree",
+      "input": "root = [1,2,3,4,5,6,7]",
+      "expectedOutput": "4",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    private int best = 0;\n\n    public int diameterOfBinaryTree(TreeNode root) {\n        best = 0;\n        height(root);\n        return best;\n    }\n\n    private int height(TreeNode node) {\n        if (node == null) return 0;\n        int left = height(node.left);\n        int right = height(node.right);\n        best = Math.max(best, left + right);\n        return 1 + Math.max(left, right);\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "Where can the longest path be?",
+      "description": "It passes through some node, going down one side and up the other.",
+      "text": "Every path has a highest node. A path through that node has one end in its left subtree and the other in its right subtree.",
+      "payload": {
+        "lines": [
+          "path through node = left height + right height"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "TREE",
+      "title": "Leaves first",
+      "description": "A leaf has height 1 and contributes a path of 0 edges.",
+      "text": "Leaves 4 and 5 have height 1 and a path of length 0 through them.",
+      "payload": {
+        "values": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          7
+        ],
+        "parents": [
+          -1,
+          0,
+          0,
+          1,
+          1,
+          2
+        ],
+        "highlight": [
+          3,
+          4
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "type": "TREE",
+      "title": "Combine at node 2",
+      "description": "Left height 1 plus right height 0 gives a path of 1 edge.",
+      "text": "Node 2 has a left height of 1 and a right height of 0, so the longest path through node 2 has one edge.",
+      "payload": {
+        "values": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          7
+        ],
+        "parents": [
+          -1,
+          0,
+          0,
+          1,
+          1,
+          2
+        ],
+        "highlight": [
+          1
+        ]
+      }
+    },
+    {
+      "order": 4,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "At the root, what is the candidate path length?",
+      "text": "At the root the left height is 2 and the right height is 2. Choose the candidate diameter.",
+      "payload": {
+        "prompt": "left height = 2, right height = 2. What is the path through the root?",
+        "options": [
+          "2",
+          "4",
+          "5",
+          "3"
+        ],
+        "answerIndex": 1,
+        "explanation": "The path through the root is the sum of both heights, which is 4 edges."
+      }
+    },
+    {
+      "order": 5,
+      "type": "SUCCESS",
+      "title": "Diameter is 4",
+      "description": "The longest path is 4 to 2 to 1 to 3 to 7.",
+      "text": "The diameter is 4 edges along the path 4, 2, 1, 3, 7, which is longer than the path through any single node.",
+      "payload": {
+        "message": "Diameter is 4 edges."
+      }
+    }
+  ]
+}

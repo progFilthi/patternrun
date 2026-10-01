@@ -1,0 +1,178 @@
+{
+  "slug": "online-stock-span",
+  "externalId": 901,
+  "title": "Online Stock Span",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "GUIDED",
+  "primaryPattern": "monotonic-stack",
+  "secondaryPatterns": [],
+  "statement": "Design an algorithm that receives a stream of daily prices and, for each day, reports the span: the number of consecutive days immediately before today, going back, for which today's price was not higher.",
+  "constraints": [
+    "1 <= prices.length <= 1000",
+    "0 <= prices[i] <= 10^6",
+    "Every call to next must run in O(1) amortized time"
+  ],
+  "examples": [
+    {
+      "input": "prices = [100, 80, 60, 70, 65, 75, 74, 80]",
+      "output": "[1, 1, 1, 2, 1, 4, 6, 7]",
+      "explanation": "Price 75 on day 6 covers 75, 74, 65 and 70, so the span is 4."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "A span is the distance to the previous day that was strictly greater than today. Which pattern finds previous greater elements for a stream?"
+    },
+    {
+      "level": 2,
+      "content": "Instead of storing all previous prices, store only the days that a future price could still be compared against."
+    },
+    {
+      "level": 3,
+      "content": "Keep a decreasing stack of (price, span) pairs. Each new price absorbs the spans of every cheaper price on the stack."
+    },
+    {
+      "level": 4,
+      "content": "span = 1\nwhile stack not empty and stack.top.price <= price:\n    span = span + stack.pop().span\npush(price, span)\nreturn span"
+    },
+    {
+      "level": 5,
+      "content": "Storing the aggregated span with each entry is what makes next() O(1) amortized instead of rescanning history."
+    }
+  ],
+  "pseudocode": [
+    "stack = empty stack of (price, span) pairs",
+    "next(price):",
+    "    span = 1",
+    "    while stack is not empty and stack.top.price <= price:",
+    "        span = span + stack.top.span",
+    "        stack.pop()",
+    "    stack.push(price, span)",
+    "    return span"
+  ],
+  "timeComplexity": "O(n)",
+  "spaceComplexity": "O(n)",
+  "invariant": "Stack prices are strictly decreasing from bottom to top, and each entry stores the full number of days that block covers.",
+  "whyThisPattern": "The question asks for the previous greater element, which is the same monotonic stack family as next greater but on a stream. Merging spans while popping turns the whole history into a handful of blocks, so each call is amortized constant.",
+  "bruteForce": "Walk backwards until you find a greater price: O(n^2) overall, up to 500,000 comparisons for 1,000 days. With repeated calls in an interview this is the version that times out.",
+  "interviewExplanation": "I keep a stack of price blocks where each entry stores a price and the number of consecutive days it covers, with prices strictly decreasing from bottom to top. When a new price arrives I absorb every cheaper block, adding their spans together, and then push the new price with the total span plus one for today. Each entry is pushed and popped at most once, so every call is O(1) amortized.",
+  "commonMistakes": [
+    "Forgetting to add one for the current day in the span.",
+    "Using < instead of <= in the comparison, which breaks the invariant on equal prices.",
+    "Storing prices without their aggregated span, which forces a backwards scan per call."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "prices = [100,80,60,70,65,75,74,80]",
+      "expectedOutput": "[1,1,1,2,1,4,6,7]",
+      "hidden": false
+    },
+    {
+      "label": "Strictly increasing",
+      "input": "prices = [1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": false
+    },
+    {
+      "label": "All equal",
+      "input": "prices = [5,5,5]",
+      "expectedOutput": "[3,2,1]",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class StockSpanner {\n    private final Deque<int[]> stack = new ArrayDeque<>();   // {price, span}\n\n    public int next(int price) {\n        int span = 1;\n        while (!stack.isEmpty() && stack.peek()[0] <= price) {\n            span += stack.pop()[1];\n        }\n        stack.push(new int[]{price, span});\n        return span;\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "Span is a block of days",
+      "description": "Today plus every consecutive cheaper day before it.",
+      "text": "The span of a day counts today and the consecutive days before it that were not more expensive.",
+      "payload": {
+        "lines": [
+          "span = 1 + cheaper blocks in front"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "STACK",
+      "title": "Prices descend so far",
+      "description": "100, 80, 60 are pushed, each with span 1.",
+      "text": "After prices 100, 80 and 60 the stack holds three blocks, each covering one day.",
+      "payload": {
+        "items": [
+          "100/1",
+          "80/1",
+          "60/1"
+        ],
+        "top": 2
+      }
+    },
+    {
+      "order": 3,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "Price 70 arrives while 60 and 80 are on the stack.",
+      "text": "The stack top is 60 and the new price is 70. Choose what the algorithm does.",
+      "payload": {
+        "prompt": "New price 70, stack top price 60. What happens?",
+        "options": [
+          "Ignore the stack",
+          "Pop 60 and add its span",
+          "Pop 80 and add its span",
+          "Stop the class"
+        ],
+        "answerIndex": 1,
+        "explanation": "60 is cheaper than today, so its block is absorbed and the span grows by one day."
+      }
+    },
+    {
+      "order": 4,
+      "type": "STACK",
+      "title": "Absorb the cheaper blocks",
+      "description": "60 is absorbed, 80 stays because it is more expensive than 70.",
+      "text": "The block for 60 is popped and its span of 1 is added, giving span 2, and 70 is pushed with span 2. The block for 80 stays because 80 is more expensive than 70.",
+      "payload": {
+        "items": [
+          "100/1",
+          "80/1",
+          "70/2"
+        ],
+        "top": 2
+      }
+    },
+    {
+      "order": 5,
+      "type": "STACK",
+      "title": "One day absorbs three blocks",
+      "description": "75 absorbs 65, 70 and 60, so the span becomes 4.",
+      "text": "When 75 arrives it pops 65, 70 and 60, summing their spans to 1 plus 2 plus 1, so the span is 4.",
+      "payload": {
+        "items": [
+          "100/1",
+          "80/1",
+          "75/4"
+        ],
+        "top": 2
+      }
+    },
+    {
+      "order": 6,
+      "type": "SUCCESS",
+      "title": "Streaming span",
+      "description": "Final price 80 absorbs everything, giving span 7.",
+      "text": "The last price 80 absorbs all remaining blocks and reports span 7, matching the expected sequence 1, 1, 1, 2, 1, 4, 6, 7.",
+      "payload": {
+        "message": "All spans reported in O(1) amortized time per call."
+      }
+    }
+  ]
+}

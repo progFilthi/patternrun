@@ -1,0 +1,222 @@
+{
+  "slug": "3sum",
+  "externalId": 15,
+  "title": "3Sum",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "GUIDED",
+  "primaryPattern": "two-pointers",
+  "secondaryPatterns": [],
+  "statement": "Given an integer array nums, return all unique triplets in nums that add up to zero. The solution set must not contain duplicate triplets.",
+  "constraints": [
+    "3 <= nums.length <= 10^4",
+    "-10^4 <= nums[i] <= 10^4",
+    "Only unique triplets are allowed in the answer"
+  ],
+  "examples": [
+    {
+      "input": "nums = [-1, 0, 1, 2, -1, -4]",
+      "output": "[[-1, -1, 2], [-1, 0, 1]]",
+      "explanation": "-1 + -1 + 2 = 0 and -1 + 0 + 1 = 0. The duplicate -1 pair appears only once."
+    },
+    {
+      "input": "nums = [0, 1, 1]",
+      "output": "[]",
+      "explanation": "No three elements sum to zero."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "The first element must be fixed before the other two can be searched for. What search finds two numbers summing to a target in a sorted array?"
+    },
+    {
+      "level": 2,
+      "content": "Sort the array first. Then for each fixed first element, the remaining two can be found with two pointers."
+    },
+    {
+      "level": 3,
+      "content": "After sorting, for a fixed first value the target for the pair is negative of that value. Walk left and right inward from the rest of the array."
+    },
+    {
+      "level": 4,
+      "content": "sort(nums)\nfor i in range(n - 2):\n    if i > 0 and nums[i] == nums[i - 1]: continue\n    left = i + 1\n    right = n - 1\n    while left < right:\n        sum = nums[i] + nums[left] + nums[right]\n        if sum == 0: record; left++; right--; skip duplicates\n        elif sum < 0: left++\n        else: right--"
+    },
+    {
+      "level": 5,
+      "content": "Two de-duplication rules are required: skip a first element equal to the previous one, and after recording a triplet move both pointers past duplicates."
+    }
+  ],
+  "pseudocode": [
+    "sort nums",
+    "for each index i from 0 to n - 3:",
+    "    skip i if nums[i] equals nums[i - 1]",
+    "    left = i + 1, right = n - 1",
+    "    while left < right:",
+    "        total = nums[i] + nums[left] + nums[right]",
+    "        if total < 0: left++",
+    "        elif total > 0: right--",
+    "        record triplet, skip duplicate values on both pointers",
+    "return triplets"
+  ],
+  "timeComplexity": "O(n^2)",
+  "spaceComplexity": "O(1)",
+  "invariant": "For a fixed first element, moving left forward can only increase the sum and moving right backward can only decrease it, so a discarded pair can never be the answer.",
+  "whyThisPattern": "Two pointers work on sorted data because order tells you which direction to move. Sorting converts the array into a structure where each comparison eliminates half of the remaining candidates, and the outer loop fixes the first element so the inner search becomes the classic pair problem.",
+  "bruteForce": "Three nested loops: O(n^3). At n = 10,000 that is about 10^12 operations. Sorting plus two pointers reduces the inner work from n to n while keeping the outer loop, so the total is O(n^2).",
+  "interviewExplanation": "I sort the array, then fix the first element and search for the other two with two pointers moving inward from both ends. If the total is too small I move left forward, and if it is too large I move right backward, which is correct because the array is sorted. I also skip duplicate values so each unique triplet is produced once, giving O(n^2) time.",
+  "commonMistakes": [
+    "Forgetting to skip a repeated first element, which produces duplicate triplets.",
+    "Moving only one pointer after recording a triplet, which produces duplicates.",
+    "Trying to run two pointers on the unsorted array, where the direction rules no longer hold."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "nums = [-1,0,1,2,-1,-4]",
+      "expectedOutput": "[[-1,-1,2],[-1,0,1]]",
+      "hidden": false
+    },
+    {
+      "label": "No triplet",
+      "input": "nums = [0,1,1]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "label": "All zeros",
+      "input": "nums = [0,0,0,0]",
+      "expectedOutput": "[[0,0,0]]",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public List<List<Integer>> threeSum(int[] nums) {\n        List<List<Integer>> result = new ArrayList<>();\n        Arrays.sort(nums);\n        for (int i = 0; i < nums.length - 2; i++) {\n            if (nums[i] > 0) break;\n            if (i > 0 && nums[i] == nums[i - 1]) continue;\n            int left = i + 1;\n            int right = nums.length - 1;\n            while (left < right) {\n                int total = nums[i] + nums[left] + nums[right];\n                if (total < 0) {\n                    left++;\n                } else if (total > 0) {\n                    right--;\n                } else {\n                    result.add(List.of(nums[i], nums[left], nums[right]));\n                    while (left < right && nums[left] == nums[left + 1]) left++;\n                    while (left < right && nums[right] == nums[right - 1]) right--;\n                    left++;\n                    right--;\n                }\n            }\n        }\n        return result;\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "Sort first",
+      "description": "Two pointers need order to decide a direction.",
+      "text": "After sorting the array is -4, -1, -1, 0, 1, 2, so moving right backward always reduces the sum.",
+      "payload": {
+        "lines": [
+          "sort ascending",
+          "then move inward"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "POINTER",
+      "title": "Fix the first element",
+      "description": "i = 0 with value -4, the pair target becomes 4.",
+      "text": "First element -4 at index 0, left pointer at index 1 with -1, right pointer at index 5 with 2. The total is -3, too small.",
+      "payload": {
+        "values": [
+          -4,
+          -1,
+          -1,
+          0,
+          1,
+          2
+        ],
+        "pointers": {
+          "i": 0,
+          "left": 1,
+          "right": 5
+        },
+        "highlight": [
+          0,
+          1,
+          5
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "The total is -3, which is less than 0.",
+      "text": "The running total is -3 and the target is 0. Choose which pointer moves next.",
+      "payload": {
+        "prompt": "total = -4 + -1 + 2 = -3. Which pointer moves?",
+        "options": [
+          "Move left",
+          "Move right",
+          "Move both",
+          "Stop"
+        ],
+        "answerIndex": 0,
+        "explanation": "Moving left forward is the only way to raise the sum, because the array is sorted."
+      }
+    },
+    {
+      "order": 4,
+      "type": "POINTER",
+      "title": "Left advances",
+      "description": "Left moves to the second -1, total becomes -3 again.",
+      "text": "Left moves to index 2 holding -1. The total is still -3, so the duplicate value at the same position tells us to keep moving left.",
+      "payload": {
+        "values": [
+          -4,
+          -1,
+          -1,
+          0,
+          1,
+          2
+        ],
+        "pointers": {
+          "i": 0,
+          "left": 2,
+          "right": 5
+        },
+        "highlight": [
+          0,
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "order": 5,
+      "type": "POINTER",
+      "title": "First triplet found",
+      "description": "-1, -1, 2 adds up to 0.",
+      "text": "First element -1 at index 1, left -1 at index 2, right 2 at index 5. The total is -1 plus -1 plus 2 which is 0, so the triplet [-1, -1, 2] is recorded.",
+      "payload": {
+        "values": [
+          -4,
+          -1,
+          -1,
+          0,
+          1,
+          2
+        ],
+        "pointers": {
+          "i": 1,
+          "left": 2,
+          "right": 5
+        },
+        "highlight": [
+          1,
+          2,
+          5
+        ]
+      }
+    },
+    {
+      "order": 6,
+      "type": "SUCCESS",
+      "title": "Unique triplets only",
+      "description": "Two triplets found, no duplicates.",
+      "text": "The result is [-1, -1, 2] and [-1, 0, 1]. Duplicate values are skipped on the first element and on both pointers.",
+      "payload": {
+        "message": "Two unique triplets returned in O(n^2) time."
+      }
+    }
+  ]
+}

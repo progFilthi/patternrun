@@ -1,0 +1,180 @@
+{
+  "slug": "kth-largest-element-in-an-array",
+  "externalId": 215,
+  "title": "Kth Largest Element in an Array",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "RECOGNITION",
+  "primaryPattern": "heap",
+  "secondaryPatterns": [],
+  "statement": "Given an integer array nums and an integer k, return the kth largest element in the array. Return it as the kth smallest element of the sorted ascending array instead if that is easier to think about.",
+  "constraints": [
+    "1 <= k <= nums.length <= 10^5",
+    "-10^4 <= nums[i] <= 10^4"
+  ],
+  "examples": [
+    {
+      "input": "nums = [3, 2, 1, 5, 6, 4], k = 2",
+      "output": "5",
+      "explanation": "Sorted descending: 6, 5, 4, 3, 2, 1. The second largest is 5."
+    },
+    {
+      "input": "nums = [3, 2, 3, 1, 2, 4, 5, 5, 6], k = 4",
+      "output": "4",
+      "explanation": "Sorted descending: 6, 5, 5, 4, 3, 3, 2, 2, 1. The fourth largest is 4."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "You do not need the whole sorted order. You need one element. What structure keeps the k best values so far?"
+    },
+    {
+      "level": 2,
+      "content": "A heap of size k can hold exactly the k largest elements seen so far."
+    },
+    {
+      "level": 3,
+      "content": "A min-heap of size k makes the smallest of those k the top of the heap, which is exactly the element you would throw away."
+    },
+    {
+      "level": 4,
+      "content": "PriorityQueue<Integer> heap = new PriorityQueue<>();\nfor num in nums:\n    heap.add(num)\n    if heap.size() > k: heap.poll()\nreturn heap.peek()"
+    },
+    {
+      "level": 5,
+      "content": "The heap is built on the fly, so it never holds more than k + 1 elements. Sorting the whole array is also accepted but costs O(n log n)."
+    }
+  ],
+  "pseudocode": [
+    "heap = min-heap",
+    "for each number:",
+    "    push number into heap",
+    "    if heap size > k:",
+    "        pop the smallest",
+    "return the top of the heap"
+  ],
+  "timeComplexity": "O(n log k)",
+  "spaceComplexity": "O(k)",
+  "invariant": "After processing any prefix of the input, the heap holds the k largest values of that prefix.",
+  "whyThisPattern": "The signal is 'kth largest', which means you only ever need k candidates. Keeping them in a min-heap lets you discard the worst candidate in O(log k), which is cheaper than sorting everything and does not reorder the input.",
+  "bruteForce": "Sort the array descending and read index k - 1: O(n log n) time and it rewrites the input. For n = 100,000 sorting costs roughly 1.7 * 10^6 comparisons, while the heap version costs about n * log k, which is smaller whenever k is much smaller than n.",
+  "interviewExplanation": "I keep a min-heap of at most k elements while scanning the array, and whenever the heap grows beyond k I remove its smallest element. That guarantees the heap always holds the k largest values seen so far, so the top of the heap after the scan is the kth largest. This gives O(n log k) time and O(k) space.",
+  "commonMistakes": [
+    "Using a max-heap and keeping k elements, which actually finds the kth smallest.",
+    "Returning the last element popped from the heap instead of the top.",
+    "Removing an element before adding the new one, which is off by one when k equals the array length."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "nums = [3,2,1,5,6,4], k = 2",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "label": "Duplicates",
+      "input": "nums = [3,2,3,1,2,4,5,5,6], k = 4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "label": "k equals length",
+      "input": "nums = [7,3,9], k = 3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int findKthLargest(int[] nums, int k) {\n        PriorityQueue<Integer> heap = new PriorityQueue<>();\n        for (int num : nums) {\n            heap.add(num);\n            if (heap.size() > k) {\n                heap.poll();\n            }\n        }\n        return heap.peek();\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "You need one value, not a sort",
+      "description": "Only k candidates can ever matter.",
+      "text": "Instead of sorting the array, keep only the k largest values found so far.",
+      "payload": {
+        "lines": [
+          "keep k values",
+          "discard the rest"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "HEAP",
+      "title": "Heap fills up",
+      "description": "After 3, 2, 1, 5 the heap holds the four values seen so far.",
+      "text": "The heap contains 3, 2, 1 and 5, with 1 at the top as the smallest of them.",
+      "payload": {
+        "items": [
+          1,
+          2,
+          3,
+          5
+        ],
+        "size": 4
+      }
+    },
+    {
+      "order": 3,
+      "type": "HEAP",
+      "title": "Size exceeds k",
+      "description": "Adding 6 makes the size 5, so the smallest is removed.",
+      "text": "The value 6 is added and the size becomes 5, which is more than k equals 2, so the smallest element is removed and the size returns to 2.",
+      "payload": {
+        "items": [
+          5,
+          6
+        ],
+        "size": 2
+      }
+    },
+    {
+      "order": 4,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "Which element should leave the heap when it is too large?",
+      "text": "The heap holds 5 and 6, then 4 arrives and the size would become 3. Choose what to remove.",
+      "payload": {
+        "prompt": "Heap contains 5, 6 and the new value 4 with k = 2. Which value leaves the heap?",
+        "options": [
+          "The largest, 6",
+          "The smallest, 4",
+          "The newest value",
+          "Nothing leaves"
+        ],
+        "answerIndex": 1,
+        "explanation": "The min-heap discards its smallest element, which is the one furthest from the top k."
+      }
+    },
+    {
+      "order": 5,
+      "type": "HEAP",
+      "title": "Invariant preserved",
+      "description": "The heap always holds the k best values of the prefix processed so far.",
+      "text": "After all six numbers the heap holds 5 and 6, which are the two largest values of the array.",
+      "payload": {
+        "items": [
+          5,
+          6
+        ],
+        "size": 2
+      }
+    },
+    {
+      "order": 6,
+      "type": "SUCCESS",
+      "title": "Top of the heap is the answer",
+      "description": "With a min-heap of size k, the top is the kth largest value.",
+      "text": "The top of the min-heap is 5, which is the second largest element of the array.",
+      "payload": {
+        "message": "kth largest is 5, found in one pass with a heap of size k."
+      }
+    }
+  ]
+}

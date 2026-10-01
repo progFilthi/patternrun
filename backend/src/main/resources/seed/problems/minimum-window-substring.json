@@ -1,0 +1,226 @@
+{
+  "slug": "minimum-window-substring",
+  "externalId": 76,
+  "title": "Minimum Window Substring",
+  "difficulty": "HARD",
+  "trainingDifficulty": "GUIDED",
+  "primaryPattern": "sliding-window",
+  "secondaryPatterns": [
+    "hashing"
+  ],
+  "statement": "Given two strings s and t, return the shortest substring of s that contains every character of t, including duplicate characters. Return an empty string if no such substring exists.",
+  "constraints": [
+    "1 <= s.length, t.length <= 10^5",
+    "s and t contain only letters and digits, no spaces",
+    "The answer may use characters of t more times than t contains, but never fewer"
+  ],
+  "examples": [
+    {
+      "input": "s = \"ADOBECODEBANC\", t = \"ABC\"",
+      "output": "\"BANC\"",
+      "explanation": "\"BANC\" contains A, B, C and no shorter substring of s does."
+    },
+    {
+      "input": "s = \"a\", t = \"aa\"",
+      "output": "\"\"",
+      "explanation": "There is only one character, and t needs two, so no window exists."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "Same shape as the longest-substring problem, but the target is the shortest window and the condition is about t, not about duplicates."
+    },
+    {
+      "level": 2,
+      "content": "How many characters of t are still missing from the current window? Keep a counter of satisfied requirements."
+    },
+    {
+      "level": 3,
+      "content": "Store how many of each character t needs. Decrement the same counter while the window grows, increment while it shrinks."
+    },
+    {
+      "level": 4,
+      "content": "need = counts from t\nformed = empty map\nmissing = t.length\nleft = 0\nfor right in range(n):\n    c = s[right]\n    if need contains c:\n        if formed[c] <= need[c]: missing--\n        formed[c]++\n    while missing == 0:\n        record answer of length right - left + 1\n        d = s[left]\n        if need contains d:\n            if formed[d] <= need[d]: missing++\n            formed[d]--\n        left++"
+    },
+    {
+      "level": 5,
+      "content": "The 'missing' counter is what makes duplicates correct. Counting distinct matched characters only breaks the t = \"aa\" case."
+    }
+  ],
+  "pseudocode": [
+    "need = frequency map of t",
+    "formed = empty map",
+    "missing = length of t",
+    "left = 0",
+    "for right from 0 to n - 1:",
+    "    add s[right], decrement missing if it satisfies a requirement",
+    "    while missing == 0:",
+    "        answer = min(answer, window [left, right])",
+    "        remove s[left], increment missing if a requirement breaks",
+    "        left = left + 1",
+    "return answer"
+  ],
+  "timeComplexity": "O(n + m)",
+  "spaceComplexity": "O(1)",
+  "invariant": "missing equals the number of t characters the current window still needs, so the window is a candidate exactly when missing is zero.",
+  "whyThisPattern": "The signal is 'contiguous region + shortest + contains a required set'. Expanding right collects requirements, shrinking left improves the candidate, and the missing counter tells you exactly when the window is a valid answer. The result is one pass over each string.",
+  "bruteForce": "Try every start index and extend right until the window covers t, keeping the shortest: O(n * n). At n = 100,000 that is about 10^10 character operations. A sliding window with two pointers never revisits a character, so it is O(n + m).",
+  "interviewExplanation": "I keep a frequency map of what t needs and a counter of how many required characters are still missing from the current window. I expand the right pointer to collect characters and, whenever the missing counter reaches zero, I shrink from the left while recording the shortest window I have seen. Each pointer moves only forward, so the total work is linear in the length of both strings.",
+  "commonMistakes": [
+    "Counting distinct matched characters instead of occurrences, which fails when t repeats a character.",
+    "Shrinking the window even after the answer is recorded without checking whether it was valid.",
+    "Forgetting to handle the case where t contains a character that s does not, so no window is ever valid."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "s = \"ADOBECODEBANC\", t = \"ABC\"",
+      "expectedOutput": "\"BANC\"",
+      "hidden": false
+    },
+    {
+      "label": "Duplicate requirement",
+      "input": "s = \"aaab\", t = \"aab\"",
+      "expectedOutput": "\"aaab\"",
+      "hidden": false
+    },
+    {
+      "label": "No solution",
+      "input": "s = \"a\", t = \"aa\"",
+      "expectedOutput": "\"\"",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public String minWindow(String s, String t) {\n        if (s.length() < t.length()) return \"\";\n        Map<Character, Integer> need = new HashMap<>();\n        for (char c : t.toCharArray()) need.merge(c, 1, Integer::sum);\n        Map<Character, Integer> formed = new HashMap<>();\n        int missing = t.length();\n        int left = 0, bestStart = 0, bestLength = Integer.MAX_VALUE;\n        for (int right = 0; right < s.length(); right++) {\n            char c = s.charAt(right);\n            if (need.containsKey(c)) {\n                if (formed.merge(c, 1, Integer::sum) <= need.get(c)) missing--;\n            }\n            while (missing == 0) {\n                if (right - left + 1 < bestLength) {\n                    bestLength = right - left + 1;\n                    bestStart = left;\n                }\n                char d = s.charAt(left++);\n                if (need.containsKey(d)) {\n                    if (formed.merge(d, -1, Integer::sum) < need.get(d)) missing++;\n                }\n            }\n        }\n        return bestLength == Integer.MAX_VALUE ? \"\" : s.substring(bestStart, bestStart + bestLength);\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "What makes a window correct?",
+      "description": "The window must contain every character of t, with the right counts.",
+      "text": "A window is a valid answer only when it contains every character of t as many times as t requires.",
+      "payload": {
+        "lines": [
+          "s = ADOBECODEBANC",
+          "t = ABC",
+          "valid window contains A, B and C"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "WINDOW",
+      "title": "Expand until it covers t",
+      "description": "Right moves to the last C, missing reaches 0.",
+      "text": "The window is BANC with left 9 and right 12. It contains A, B and C, so the missing counter is zero.",
+      "payload": {
+        "values": [
+          "A",
+          "D",
+          "O",
+          "B",
+          "E",
+          "C",
+          "O",
+          "D",
+          "E",
+          "B",
+          "A",
+          "N",
+          "C"
+        ],
+        "left": 9,
+        "right": 12,
+        "valid": true
+      }
+    },
+    {
+      "order": 3,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "The window is valid. What should happen next, and why?",
+      "text": "The window currently covers t. Choose the next action to make the answer shorter.",
+      "payload": {
+        "prompt": "The current window already contains everything from t. What now?",
+        "options": [
+          "Move right further",
+          "Move left forward to shrink",
+          "Reset the window",
+          "Stop immediately"
+        ],
+        "answerIndex": 1,
+        "explanation": "Record the candidate, then shrink from the left until the window breaks."
+      }
+    },
+    {
+      "order": 4,
+      "type": "WINDOW",
+      "title": "Shrink to the shortest cover",
+      "description": "The window becomes ANC, then the B is lost.",
+      "text": "Left advances to 10, so the window is ANC and the B at index 9 has left the window, making it invalid again.",
+      "payload": {
+        "values": [
+          "A",
+          "D",
+          "O",
+          "B",
+          "E",
+          "C",
+          "O",
+          "D",
+          "E",
+          "B",
+          "A",
+          "N",
+          "C"
+        ],
+        "left": 10,
+        "right": 12,
+        "valid": false
+      }
+    },
+    {
+      "order": 5,
+      "type": "HASH_MAP",
+      "title": "What is still missing",
+      "description": "Missing counts occurrences, not distinct characters.",
+      "text": "The missing counter equals the number of required characters still absent, so a repeated requirement such as 'aa' needs two characters.",
+      "payload": {
+        "entries": [
+          {
+            "key": "A",
+            "value": 1
+          },
+          {
+            "key": "B",
+            "value": 1
+          },
+          {
+            "key": "C",
+            "value": 1
+          }
+        ],
+        "lookup": {
+          "key": "B",
+          "found": false
+        }
+      }
+    },
+    {
+      "order": 6,
+      "type": "SUCCESS",
+      "title": "Shortest window found",
+      "description": "BANC is the shortest window containing ABC.",
+      "text": "The best candidate is BANC with length 4, found without ever revisiting a character.",
+      "payload": {
+        "message": "Minimum window substring is BANC, length 4."
+      }
+    }
+  ]
+}

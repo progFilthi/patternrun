@@ -1,0 +1,28 @@
+{
+  "slug": "bfs-dfs",
+  "name": "BFS / DFS",
+  "difficultyOrder": 8,
+  "summary": "Traversal of a graph, grid or tree. BFS explores level by level with a queue, which gives shortest paths in unweighted graphs. DFS goes deep with a queue or stack, which finds components and paths.",
+  "signal": "levels, shortest unweighted path, components, exploration, recursive traversal",
+  "mentalModel": "BFS: spread out level by level. DFS: go deep, backtrack on dead ends.",
+  "recognitionRules": [
+    "The structure is a grid, tree, or adjacency list.",
+    "You need the shortest number of steps in an unweighted graph.",
+    "You need connected components, cycles, or 'can we reach this node'.",
+    "The answer is the level, the depth, or the number of layers.",
+    "A brute force restarts exploration from every unvisited node (DFS)."
+  ],
+  "template": [
+    "queue = [start]",
+    "visited = {start}",
+    "",
+    "while queue is not empty:",
+    "    node = queue.removeFirst()",
+    "",
+    "    for neighbour in adjacency(node):",
+    "        if neighbour not in visited:",
+    "            visited.add(neighbour)      // mark on insert, not on pop",
+    "            queue.addLast(neighbour)"
+  ],
+  "invariant": "Nodes are processed in non-decreasing distance from the start, so the first time a node is reached its distance is minimal."
+}

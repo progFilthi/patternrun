@@ -1,0 +1,30 @@
+{
+  "slug": "two-pointers",
+  "name": "Two Pointers",
+  "difficultyOrder": 3,
+  "summary": "Scan from both ends of a sorted region. At every step the current state tells you which pointer must move, so half of the remaining space is eliminated per iteration. Works in place with no extra memory.",
+  "signal": "sorted array, pair, palindrome, opposite ends, in-place deduplication",
+  "mentalModel": "L on the left, R on the right. Evaluate, then move exactly one of them.",
+  "recognitionRules": [
+    "The array is sorted, or can be sorted without breaking the answer.",
+    "You need a pair, a triplet, or a mirrored value.",
+    "You are scanning from both ends of the same region.",
+    "The comparison at the current state proves one side can be discarded.",
+    "You must deduplicate or remove elements in place."
+  ],
+  "template": [
+    "left = 0",
+    "right = n - 1",
+    "",
+    "while left < right:",
+    "    evaluate current state",
+    "",
+    "    if we need a larger value:",
+    "        left++",
+    "    else if we need a smaller value:",
+    "        right--",
+    "    else:",
+    "        record answer, then move both past duplicates"
+  ],
+  "invariant": "Moving the pointer you chose cannot discard a valid answer."
+}

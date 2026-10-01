@@ -1,0 +1,219 @@
+{
+  "slug": "find-minimum-in-rotated-sorted-array",
+  "externalId": 153,
+  "title": "Find Minimum in Rotated Sorted Array",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "GUIDED",
+  "primaryPattern": "binary-search",
+  "secondaryPatterns": [],
+  "statement": "An array sorted in ascending order is rotated at an unknown pivot. Given the rotated array, find and return the minimum element in O(log n) time.",
+  "constraints": [
+    "1 <= nums.length <= 5000",
+    "-10^4 <= nums[i] <= 10^4",
+    "All values in nums are unique"
+  ],
+  "examples": [
+    {
+      "input": "nums = [3,4,5,1,2]",
+      "output": "1",
+      "explanation": "The minimum 1 sits right after the rotation point."
+    },
+    {
+      "input": "nums = [4,5,6,7,0,1,2]",
+      "output": "0",
+      "explanation": "Rotating after 7 puts the minimum at index 4."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "You do not need to find the target. You only need to know which half still contains the minimum."
+    },
+    {
+      "level": 2,
+      "content": "Compare nums[mid] with the right end of the current range."
+    },
+    {
+      "level": 3,
+      "content": "If nums[mid] is greater than nums[high], the minimum must be to the right of mid. Otherwise the minimum is at mid or to its left."
+    },
+    {
+      "level": 4,
+      "content": "low = 0, high = n - 1\nwhile low < high:\n    mid = low + (high - low) / 2\n    if nums[mid] > nums[high]: low = mid + 1\n    else: high = mid\nreturn nums[low]"
+    },
+    {
+      "level": 5,
+      "content": "Use high = mid, not high = mid - 1. The minimum itself might be the element at mid."
+    }
+  ],
+  "pseudocode": [
+    "low = 0, high = n - 1",
+    "while low < high:",
+    "    mid = low + (high - low) / 2",
+    "    if nums[mid] > nums[high]:",
+    "        low = mid + 1",
+    "    else:",
+    "        high = mid",
+    "return nums[low]"
+  ],
+  "timeComplexity": "O(log n)",
+  "spaceComplexity": "O(1)",
+  "invariant": "The minimum of the whole array is always inside the range [low, high], and low < high guarantees the loop terminates on a single element.",
+  "whyThisPattern": "Rotation always puts the minimum at the single descending point. Comparing the midpoint with the high end of the range tells you which side of the midpoint contains that point, so half the search space disappears each step.",
+  "bruteForce": "Scanning for the smallest value is O(n), which at n = 500,000 is 500,000 comparisons. Binary search reduces it to about 19 comparisons, which matters because this appears inside larger problems where the scan dominates the runtime.",
+  "interviewExplanation": "I binary search for the rotation point instead of for a value. If the midpoint is greater than the right end of the range, the minimum must lie after the midpoint, otherwise it is at the midpoint or before it, so I shrink the range accordingly. The loop ends when low equals high, and that element is the minimum, giving O(log n) time and O(1) space.",
+  "commonMistakes": [
+    "Using high = mid - 1 and dropping the minimum when the array is not rotated.",
+    "Comparing nums[mid] with nums[low] instead of nums[high], which is not a valid test when the pivot is to the left.",
+    "Writing while low <= high, which leaves the single element case unhandled."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "nums = [3,4,5,1,2]",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "label": "Pivot at index 4",
+      "input": "nums = [4,5,6,7,0,1,2]",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "label": "Single element",
+      "input": "nums = [11]",
+      "expectedOutput": "11",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int findMin(int[] nums) {\n        int low = 0;\n        int high = nums.length - 1;\n        while (low < high) {\n            int mid = low + (high - low) / 2;\n            if (nums[mid] > nums[high]) {\n                low = mid + 1;\n            } else {\n                high = mid;\n            }\n        }\n        return nums[low];\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "One descending step",
+      "description": "The minimum is the element right after the only drop.",
+      "text": "In the array 4, 5, 6, 7, 0, 1, 2 the sequence descends exactly once, from 7 to 0, and 0 is the minimum.",
+      "payload": {
+        "lines": [
+          "4 5 6 7 | 0 1 2",
+          "the drop marks the minimum"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "POINTER",
+      "title": "Compare mid with high",
+      "description": "low = 0, high = 6, mid = 3, value 7.",
+      "text": "Midpoint index 3 holds 7 and the right end index 6 holds 2. Because 7 is greater than 2, the minimum lies after the midpoint.",
+      "payload": {
+        "values": [
+          4,
+          5,
+          6,
+          7,
+          0,
+          1,
+          2
+        ],
+        "pointers": {
+          "low": 0,
+          "high": 6,
+          "mid": 3
+        },
+        "highlight": [
+          3,
+          6
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "nums[mid] = 7, nums[high] = 2.",
+      "text": "The midpoint value is 7 and the right end value is 2. Choose which bound moves.",
+      "payload": {
+        "prompt": "nums[mid] = 7, nums[high] = 2. Where is the minimum?",
+        "options": [
+          "Left of mid",
+          "At or left of mid",
+          "Right of mid",
+          "Not in the array"
+        ],
+        "answerIndex": 2,
+        "explanation": "7 greater than 2 means the descent is between mid and high, so low moves to mid + 1."
+      }
+    },
+    {
+      "order": 4,
+      "type": "POINTER",
+      "title": "Half eliminated",
+      "description": "low = 4, high = 6, mid = 5, value 1.",
+      "text": "Low moves to index 4. Midpoint index 5 holds 1 and the right end holds 2, so 1 is not greater than 2 and high moves down to the midpoint.",
+      "payload": {
+        "values": [
+          4,
+          5,
+          6,
+          7,
+          0,
+          1,
+          2
+        ],
+        "pointers": {
+          "low": 4,
+          "high": 6,
+          "mid": 5
+        },
+        "highlight": [
+          5
+        ]
+      }
+    },
+    {
+      "order": 5,
+      "type": "POINTER",
+      "title": "Range of two",
+      "description": "low = 4, high = 5, mid = 4, value 0.",
+      "text": "High moves to index 5. Midpoint index 4 holds 0 and the right end holds 1, so the minimum is at the midpoint or to its left, and high becomes 4.",
+      "payload": {
+        "values": [
+          4,
+          5,
+          6,
+          7,
+          0,
+          1,
+          2
+        ],
+        "pointers": {
+          "low": 4,
+          "high": 5,
+          "mid": 4
+        },
+        "highlight": [
+          4,
+          5
+        ]
+      }
+    },
+    {
+      "order": 6,
+      "type": "SUCCESS",
+      "title": "Single element left",
+      "description": "low equals high, so the answer is at that index.",
+      "text": "Low and high both equal 4, so the minimum of the array is the value 0 at index 4.",
+      "payload": {
+        "message": "Minimum is 0, found in three binary search steps."
+      }
+    }
+  ]
+}

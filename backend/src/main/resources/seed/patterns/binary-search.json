@@ -1,0 +1,31 @@
+{
+  "slug": "binary-search",
+  "name": "Binary Search",
+  "difficultyOrder": 4,
+  "summary": "Keep a search space [low, high] and cut it in half every iteration. Works on sorted arrays and, with extra conditions, on rotated arrays, monotonic conditions, and 'smallest value that works' answers.",
+  "signal": "sorted or monotonic search space, 'can we do it?', minimum or maximum feasible answer",
+  "mentalModel": "LOW to HIGH, pick MID, discard one half. The answer stays inside the space.",
+  "recognitionRules": [
+    "The data is sorted, or partially sorted (rotated).",
+    "A condition is monotonic: once it becomes true it stays true.",
+    "You are asked for the smallest or largest value that satisfies a predicate.",
+    "You can cheaply verify a candidate, and the search space can be halved.",
+    "The problem says 'at least', 'at most', 'minimum capacity', 'maximum speed'."
+  ],
+  "template": [
+    "low = first candidate",
+    "high = last candidate",
+    "",
+    "while low <= high:",
+    "    mid = low + (high - low) / 2",
+    "",
+    "    if mid satisfies the condition:",
+    "        record answer",
+    "",
+    "    if we need to go left:",
+    "        high = mid - 1",
+    "    else:",
+    "        low = mid + 1"
+  ],
+  "invariant": "The answer remains inside the search space [low, high]."
+}

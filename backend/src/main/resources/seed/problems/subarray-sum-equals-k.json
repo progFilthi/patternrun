@@ -1,0 +1,244 @@
+{
+  "slug": "subarray-sum-equals-k",
+  "externalId": 560,
+  "title": "Subarray Sum Equals K",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "GUIDED",
+  "primaryPattern": "hashing",
+  "secondaryPatterns": [
+    "sliding-window"
+  ],
+  "statement": "Given an array of integers nums and an integer k, return the total number of contiguous subarrays whose sum equals k.",
+  "constraints": [
+    "1 <= nums.length <= 10^4",
+    "-1000 <= nums[i] <= 1000",
+    "nums may contain negative numbers, so the plain sliding window does not work"
+  ],
+  "examples": [
+    {
+      "input": "nums = [1, 1, 1], k = 2",
+      "output": "2",
+      "explanation": "The subarrays [1,1] at index 0 and [1,1] at index 1 both sum to 2."
+    },
+    {
+      "input": "nums = [1, 2, 3], k = 3",
+      "output": "2",
+      "explanation": "The subarray [1,2] and the single element [3] both sum to 3."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "A sliding window cannot work here because the array contains negative numbers. What can you do instead of adjusting the window boundaries?"
+    },
+    {
+      "level": 2,
+      "content": "Turn every subarray into a subtraction of two prefix sums."
+    },
+    {
+      "level": 3,
+      "content": "sum(i..j) = prefix[j] - prefix[i - 1]. If the running sum is s, how many earlier running sums must have been equal to s - k?"
+    },
+    {
+      "level": 4,
+      "content": "Map<running sum, count of times seen>\nstart with {0: 1} so subarrays starting at index 0 are counted\nfor each number:\n    running += number\n    answer += map.getOrDefault(running - k, 0)\n    map.merge(running, 1, Integer::sum)"
+    },
+    {
+      "level": 5,
+      "content": "Use HashMap<Integer, Integer> counts. It must be seeded with {0 -> 1}, otherwise every subarray that starts at index 0 is missed."
+    }
+  ],
+  "pseudocode": [
+    "counts = {0: 1}",
+    "running = 0",
+    "answer = 0",
+    "for each number x:",
+    "    running = running + x",
+    "    answer = answer + counts[running - k]",
+    "    counts[running] = counts[running] + 1",
+    "return answer"
+  ],
+  "timeComplexity": "O(n)",
+  "spaceComplexity": "O(n)",
+  "invariant": "counts holds the number of times each running prefix sum has appeared so far, including the empty prefix 0.",
+  "whyThisPattern": "The signal is 'contiguous range' but the array can contain negative numbers, so the window cannot be steered by growing and shrinking. Prefix sums replace the range with a subtraction, and the subtraction becomes a HashMap lookup, which is exactly the hashing pattern.",
+  "bruteForce": "Compute the sum of every subarray: for i, extend j and accumulate. That is O(n^2) time. At n = 10,000 it is about 5 * 10^7 additions, which is already too slow for repeated calls. With prefix sums and a frequency map each element is processed once, so the same work becomes O(n).",
+  "interviewExplanation": "I keep a running prefix sum and a map from each prefix sum to how many times it has appeared. For a subarray ending at the current index to sum to k, the prefix before it must equal running minus k, so I add how many times that value was seen. I seed the map with zero so subarrays that start at index 0 are counted, giving O(n) time and O(n) space.",
+  "commonMistakes": [
+    "Forgetting to seed the map with {0: 1}, which drops every subarray starting at index 0.",
+    "Adding the count to the answer before incrementing the current running sum, which would allow an empty subarray.",
+    "Assuming the sliding window trick works even though negative values break monotonicity."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "nums = [1,1,1], k = 2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "label": "Zero prefix",
+      "input": "nums = [1, -1, 0], k = 0",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "label": "Negative numbers",
+      "input": "nums = [1, -1, -1, 1], k = 0",
+      "expectedOutput": "4",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int subarraySum(int[] nums, int k) {\n        Map<Integer, Integer> counts = new HashMap<>();\n        counts.put(0, 1);\n        int running = 0;\n        int answer = 0;\n        for (int num : nums) {\n            running += num;\n            answer += counts.getOrDefault(running - k, 0);\n            counts.merge(running, 1, Integer::sum);\n        }\n        return answer;\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "The window trick is blocked",
+      "description": "Negative values mean shrinking the window can make the sum go up.",
+      "text": "Because the array contains negative numbers, expanding and shrinking a window cannot reliably control the sum.",
+      "payload": {
+        "lines": [
+          "nums = [1, -1, 0]",
+          "k = 0",
+          "no monotonic window exists"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "PREFIX_SUM",
+      "title": "Rewrite the range as a subtraction",
+      "description": "Any subarray sum is a difference of two prefix sums.",
+      "text": "The subarray sum from index i to j equals prefix at j plus one minus prefix at i.",
+      "payload": {
+        "values": [
+          1,
+          -1,
+          0
+        ],
+        "prefix": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "currentIndex": 0
+      }
+    },
+    {
+      "order": 3,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "The running sum is s. Which earlier running sum do we need to count?",
+      "text": "Given the running sum s, choose the earlier running sum that completes a subarray summing to k.",
+      "payload": {
+        "prompt": "running sum = 1, k = 0. Which earlier prefix sum forms a subarray that sums to k?",
+        "options": [
+          "running + k",
+          "running - k",
+          "running * k",
+          "running / k"
+        ],
+        "answerIndex": 1,
+        "explanation": "running - k = 1 - 0 = 1, which has appeared once already"
+      }
+    },
+    {
+      "order": 4,
+      "type": "HASH_MAP",
+      "title": "Counts of running sums",
+      "description": "Start with the empty prefix so index 0 is counted.",
+      "text": "The map starts with prefix sum 0 appearing once, which represents the empty prefix.",
+      "payload": {
+        "entries": [
+          {
+            "key": 0,
+            "value": 1
+          }
+        ],
+        "lookup": null
+      }
+    },
+    {
+      "order": 5,
+      "type": "PREFIX_SUM",
+      "title": "First element",
+      "description": "running becomes 1, look for 1 - 0 = 1.",
+      "text": "After adding 1 the running sum is 1. Looking for 1 minus 0 which is 1, and 1 has not appeared yet.",
+      "payload": {
+        "values": [
+          1,
+          -1,
+          0
+        ],
+        "prefix": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "currentIndex": 1
+      }
+    },
+    {
+      "order": 6,
+      "type": "PREFIX_SUM",
+      "title": "Second element",
+      "description": "running becomes 0, look for 0 - 0 = 0, seen once.",
+      "text": "After adding -1 the running sum is 0. Looking for 0 minus 0 which is 0, seen once, so one subarray is counted.",
+      "payload": {
+        "values": [
+          1,
+          -1,
+          0
+        ],
+        "prefix": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "currentIndex": 2
+      }
+    },
+    {
+      "order": 7,
+      "type": "HASH_MAP",
+      "title": "Two distinct subarrays, same sum",
+      "description": "Running sum 0 has now been seen twice, which is why counts must be stored, not just seen.",
+      "text": "The map now holds prefix 0 twice and prefix 1 once. Storing counts rather than booleans is what makes the counting correct.",
+      "payload": {
+        "entries": [
+          {
+            "key": 0,
+            "value": 2
+          },
+          {
+            "key": 1,
+            "value": 1
+          }
+        ],
+        "lookup": {
+          "key": 0,
+          "found": true
+        }
+      }
+    },
+    {
+      "order": 8,
+      "type": "SUCCESS",
+      "title": "Counted in one pass",
+      "description": "Each element produced at most one map lookup.",
+      "text": "The whole count is produced by one pass with one lookup and one update per element.",
+      "payload": {
+        "message": "Every subarray was found with a single pass, no nested loops."
+      }
+    }
+  ]
+}

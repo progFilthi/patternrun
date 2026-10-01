@@ -1,0 +1,35 @@
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+
+spring:
+  application:
+    name: patternrun-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/patternrun}
+    username: ${DB_USERNAME:patternrun}
+    password: ${DB_PASSWORD:patternrun}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        type:
+          json_format_mapper: jackson
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+
+patternrun:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+logging:
+  level:
+    org.flywaydb: INFO

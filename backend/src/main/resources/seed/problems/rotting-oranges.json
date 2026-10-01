@@ -1,0 +1,319 @@
+{
+  "slug": "rotting-oranges",
+  "externalId": 994,
+  "title": "Rotting Oranges",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "RECOGNITION",
+  "primaryPattern": "bfs-dfs",
+  "secondaryPatterns": [],
+  "statement": "Given a grid where each cell is 0 (fresh orange), 1 (rotten orange) or 2 (empty), return the minimum number of minutes in which no fresh orange exists. Rot spreads to the four adjacent cells every minute. Return -1 if this is impossible.",
+  "constraints": [
+    "1 <= grid.length <= 10 * 10",
+    "grid[i][j] is 0, 1 or 2",
+    "The grid is a rectangle"
+  ],
+  "examples": [
+    {
+      "input": "grid = [[2,1,1],[1,1,0],[0,1,1]]",
+      "output": "4",
+      "explanation": "The fresh orange at the bottom middle is four cells away from the nearest rotten orange."
+    },
+    {
+      "input": "grid = [[0,2]]",
+      "output": "-1",
+      "explanation": "A fresh orange with no rotten neighbour can never rot."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "The question asks for the distance to the nearest rotten orange, for every cell at once. Which traversal answers that?"
+    },
+    {
+      "level": 2,
+      "content": "Every rotten orange is a source with time 0, and rot spreads one cell per minute."
+    },
+    {
+      "level": 3,
+      "content": "Multi-source BFS: put all rotten oranges in the queue first, then expand level by level. Each level is one minute."
+    },
+    {
+      "level": 4,
+      "content": "queue = all cells with value 1\nminutes = 0\nwhile queue not empty:\n    for each cell in queue (level):\n        for each neighbour that is fresh:\n            mark it rotten, add to next level\n    if next level is empty: break\n    minutes++"
+    },
+    {
+      "level": 5,
+      "content": "After BFS, if any 0 remains, the answer is -1 because that orange can never be reached."
+    }
+  ],
+  "pseudocode": [
+    "queue = all rotten oranges",
+    "minutes = 0",
+    "while queue is not empty:",
+    "    for each cell in this level of the queue:",
+    "        for each of its four neighbours:",
+    "            if neighbour is fresh:",
+    "                rot it and add it to the next level",
+    "    minutes = minutes + 1",
+    "return -1 if any fresh orange remains, otherwise the last minute counted"
+  ],
+  "timeComplexity": "O(m * n)",
+  "spaceComplexity": "O(m * n)",
+  "invariant": "At the start of each level, every cell in the queue was reached at exactly the same minute, so BFS always expands the earliest unprocessed rot first.",
+  "whyThisPattern": "Every cell needs its distance to the nearest source, which is precisely what multi-source BFS computes. The grid edges all cost one minute, so BFS level equals minute, and DFS would be the wrong tool because it does not guarantee the shortest distance.",
+  "bruteForce": "Run a separate BFS from every rotten orange, or scan forward and backward repeatedly to simulate minutes: both are much slower than one BFS from all sources at once. A minute by minute simulation also needs up to m * n passes.",
+  "interviewExplanation": "I start a BFS from every rotten orange at once, so all sources begin at minute zero. Each BFS level then corresponds to one minute of rot spreading, and I convert fresh neighbours of the current level into rotten cells. If any fresh orange survives the traversal it is unreachable and the answer is minus one, otherwise the number of levels is the answer.",
+  "commonMistakes": [
+    "Seeding the queue with only one rotten orange instead of all of them.",
+    "Rotting neighbours of cells that were queued but not yet processed, which shortens the answer by one minute.",
+    "Returning the number of processed levels even when fresh oranges remain, instead of -1."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "grid = [[2,1,1],[1,1,0],[0,1,1]]",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "label": "Unreachable fresh orange",
+      "input": "grid = [[0,2]]",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "label": "Already done",
+      "input": "grid = [[2]]",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int orangesRotting(int[][] grid) {\n        int rows = grid.length;\n        int cols = grid[0].length;\n        Deque<int[]> queue = new ArrayDeque<>();\n        int fresh = 0;\n        for (int r = 0; r < rows; r++) {\n            for (int c = 0; c < cols; c++) {\n                if (grid[r][c] == 1) queue.add(new int[]{r, c});\n                else if (grid[r][c] == 0) fresh++;\n            }\n        }\n        int minutes = 0;\n        while (!queue.isEmpty() && fresh > 0) {\n            int size = queue.size();\n            for (int i = 0; i < size; i++) {\n                int[] cell = queue.poll();\n                for (int[] dir : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {\n                    int nr = cell[0] + dir[0];\n                    int nc = cell[1] + dir[1];\n                    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] == 0) {\n                        grid[nr][nc] = 1;\n                        fresh--;\n                        queue.add(new int[]{nr, nc});\n                    }\n                }\n            }\n            minutes++;\n        }\n        return fresh == 0 ? minutes : -1;\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "GRAPH",
+      "title": "Every rotten orange is a source",
+      "description": "They all start at minute 0.",
+      "text": "There are four rotten oranges, and each of them begins spreading at minute 0.",
+      "payload": {
+        "cells": [
+          [
+            2,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            1
+          ]
+        ],
+        "visited": [],
+        "queue": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        "current": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "GRAPH",
+      "title": "Minute 1",
+      "description": "The whole level rots and new cells join the next level.",
+      "text": "At minute 1 the fresh orange at row 2 column 0 becomes rotten because its neighbour at row 1 column 0 was already rotten.",
+      "payload": {
+        "cells": [
+          [
+            2,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "visited": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            2,
+            0
+          ]
+        ],
+        "queue": [
+          [
+            2,
+            0
+          ]
+        ],
+        "current": [
+          2,
+          0
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "Which cell is still fresh and what is its distance?",
+      "text": "Only one fresh orange remains. Choose the minutes it needs to rot.",
+      "payload": {
+        "prompt": "One fresh orange is left. What is the minimum minutes?",
+        "options": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "answerIndex": 3,
+        "explanation": "Its distance to the nearest rotten orange at the start is four steps, so it rots after four minutes."
+      }
+    },
+    {
+      "order": 4,
+      "type": "GRAPH",
+      "title": "BFS level equals minute",
+      "description": "Four levels were expanded.",
+      "text": "BFS expanded four levels, and each level corresponds to one minute of spreading.",
+      "payload": {
+        "cells": [
+          [
+            2,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "visited": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            2,
+            0
+          ]
+        ],
+        "queue": [],
+        "current": null
+      }
+    },
+    {
+      "order": 5,
+      "type": "SUCCESS",
+      "title": "Answer is four",
+      "description": "No fresh orange remains.",
+      "text": "All oranges rotted after four minutes, so the answer is 4.",
+      "payload": {
+        "message": "Minimum minutes is 4."
+      }
+    },
+    {
+      "order": 6,
+      "type": "FAILURE",
+      "title": "The -1 case",
+      "description": "A fresh orange with no rotten neighbour can never rot.",
+      "text": "For the grid 0, 2 the fresh orange has no rotten neighbour, so it is unreachable and the answer is -1.",
+      "payload": {
+        "message": "Return -1 when fresh oranges remain.",
+        "lesson": "Multi-source BFS answers shortest distance; unreachable cells are the only failure case."
+      }
+    }
+  ]
+}

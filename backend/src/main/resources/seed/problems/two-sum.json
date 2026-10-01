@@ -1,0 +1,233 @@
+{
+  "slug": "two-sum",
+  "externalId": 1,
+  "title": "Two Sum",
+  "difficulty": "EASY",
+  "trainingDifficulty": "RECOGNITION",
+  "primaryPattern": "hashing",
+  "secondaryPatterns": [
+    "two-pointers"
+  ],
+  "statement": "Given an array of integers nums and an integer target, return the indices of the two numbers that add up to target. You may assume that each input has exactly one solution, and you may not use the same element twice. Return the answer in any order.",
+  "constraints": [
+    "2 <= nums.length <= 10^4",
+    "-10^9 <= nums[i] <= 10^9",
+    "Exactly one answer exists",
+    "The same element may not be used twice"
+  ],
+  "examples": [
+    {
+      "input": "nums = [2, 7, 11, 15], target = 9",
+      "output": "[0, 1]",
+      "explanation": "nums[0] + nums[1] = 2 + 7 = 9."
+    },
+    {
+      "input": "nums = [3, 2, 4], target = 6",
+      "output": "[1, 2]",
+      "explanation": "2 + 4 = 6. Note the answer is not [0, 2] because 3 + 3 is not 6."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "Before searching the whole array for a partner, what single piece of information would make the search instant?"
+    },
+    {
+      "level": 2,
+      "content": "For the current number x, you can compute exactly which number would complete the pair. Which one is it?"
+    },
+    {
+      "level": 3,
+      "content": "You need a structure that answers 'have I already seen this value, and at which index?' in average O(1). A HashMap does exactly that."
+    },
+    {
+      "level": 4,
+      "content": "seen = {}\nfor i, x in enumerate(nums):\n    needed = target - x\n    if needed in seen:\n        return [seen[needed], i]\n    seen[x] = i\nreturn []"
+    },
+    {
+      "level": 5,
+      "content": "Use HashMap<Integer, Integer> seen. Check the complement BEFORE storing the current number, otherwise a single element could match itself."
+    }
+  ],
+  "pseudocode": [
+    "seen = empty map",
+    "for each index i with value x:",
+    "    needed = target - x",
+    "    if seen contains needed:",
+    "        return [seen[needed], i]",
+    "    seen[x] = i",
+    "return empty"
+  ],
+  "timeComplexity": "O(n)",
+  "spaceComplexity": "O(n)",
+  "invariant": "seen contains exactly the numbers already visited, mapped to the index where they were first seen.",
+  "whyThisPattern": "The question is not 'find a pair in an array' but 'have I already seen the value I need?'. Once it is phrased that way, the answer is a HashMap lookup. The array is only scanned once, so each element costs O(1) and the total is O(n).",
+  "bruteForce": "Check every pair: for i, for j > i, test nums[i] + nums[j] == target. That is O(n^2). At n = 100,000 it is about 5 * 10^9 comparisons, which is far too slow. Storing what you have seen turns it into n lookups.",
+  "interviewExplanation": "I use a HashMap from value to index to remember the numbers I have already seen. For each number I compute the complement that would reach the target and check whether that complement is already in the map, which finds the pair in one pass. This gives O(n) time and O(n) space.",
+  "commonMistakes": [
+    "Storing the current number before checking for the complement, which lets an element match itself.",
+    "Overwriting the index in the map instead of keeping the first one.",
+    "Trying to use two pointers on an unsorted array and sorting it, which loses the original indices."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "nums = [2,7,11,15], target = 9",
+      "expectedOutput": "[0,1]",
+      "hidden": false
+    },
+    {
+      "label": "Negative values",
+      "input": "nums = [-3, 4, 3, 90], target = 0",
+      "expectedOutput": "[0,2]",
+      "hidden": false
+    },
+    {
+      "label": "Duplicate values",
+      "input": "nums = [3,2,4], target = 6",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        Map<Integer, Integer> seen = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            int needed = target - nums[i];\n            if (seen.containsKey(needed)) {\n                return new int[]{seen.get(needed), i};\n            }\n            seen.put(nums[i], i);\n        }\n        return new int[]{};\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "What are we asked to find?",
+      "description": "Two values in the array that add up to target.",
+      "text": "The task is to find two numbers whose sum equals the target.",
+      "payload": {
+        "lines": [
+          "WE NEED",
+          "two numbers",
+          "whose sum equals TARGET"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "ARRAY",
+      "title": "Start scanning",
+      "description": "Look at the current number.",
+      "text": "Array [2, 7, 11, 15], current index 0 holding the value 2.",
+      "payload": {
+        "values": [
+          2,
+          7,
+          11,
+          15
+        ],
+        "pointers": {
+          "current": 0
+        },
+        "highlight": [
+          0
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "Which value completes the pair with the current number?",
+      "text": "For the current value 2, choose which value completes the pair.",
+      "payload": {
+        "prompt": "target = 9, current = 2. What do we need to look for?",
+        "options": [
+          "target + current",
+          "target - current",
+          "target / current",
+          "current - target"
+        ],
+        "answerIndex": 1,
+        "explanation": "target - current = 9 - 2 = 7"
+      }
+    },
+    {
+      "order": 4,
+      "type": "HASH_MAP",
+      "title": "Look up the complement",
+      "description": "Have we seen 7 before?",
+      "text": "Checking the map for the complement 7. The map is empty, so the answer is no.",
+      "payload": {
+        "entries": [],
+        "lookup": {
+          "key": 7,
+          "found": false
+        }
+      }
+    },
+    {
+      "order": 5,
+      "type": "HASH_MAP",
+      "title": "Remember what we saw",
+      "description": "Nothing found, so store the current number.",
+      "text": "Storing 2 at index 0 in the map. The map now holds one entry.",
+      "payload": {
+        "entries": [
+          {
+            "key": 2,
+            "value": 0
+          }
+        ],
+        "lookup": null
+      }
+    },
+    {
+      "order": 6,
+      "type": "ARRAY",
+      "title": "Next number",
+      "description": "Move to index 1, value 7.",
+      "text": "Array [2, 7, 11, 15], current index 1 holding the value 7.",
+      "payload": {
+        "values": [
+          2,
+          7,
+          11,
+          15
+        ],
+        "pointers": {
+          "current": 1
+        },
+        "highlight": [
+          1
+        ]
+      }
+    },
+    {
+      "order": 7,
+      "type": "HASH_MAP",
+      "title": "The complement is already there",
+      "description": "target - 7 = 2, and 2 is in the map at index 0.",
+      "text": "The complement of 7 is 2, and the map already contains 2 at index 0, so the answer is [0, 1].",
+      "payload": {
+        "entries": [
+          {
+            "key": 2,
+            "value": 0
+          }
+        ],
+        "lookup": {
+          "key": 2,
+          "found": true
+        }
+      }
+    },
+    {
+      "order": 8,
+      "type": "SUCCESS",
+      "title": "Answer found in one pass",
+      "description": "Two indices, one scan, no sorting.",
+      "text": "Answer found: indices 0 and 1, using a single left to right pass.",
+      "payload": {
+        "message": "Answer [0, 1] found after scanning 2 of 4 elements."
+      }
+    }
+  ]
+}

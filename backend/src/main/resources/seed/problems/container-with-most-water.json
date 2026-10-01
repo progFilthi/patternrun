@@ -1,0 +1,219 @@
+{
+  "slug": "container-with-most-water",
+  "externalId": 11,
+  "title": "Container With Most Water",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "RECOGNITION",
+  "primaryPattern": "two-pointers",
+  "secondaryPatterns": [],
+  "statement": "Given n non-negative integers where each value represents a point at index i on the y-axis, find two lines that together with the x-axis form a container holding the most water. Return the maximum amount of water.",
+  "constraints": [
+    "1 <= n <= 10^5",
+    "0 <= height[i] <= 10^4",
+    "At least two lines exist"
+  ],
+  "examples": [
+    {
+      "input": "height = [1, 8, 6, 2, 5, 4, 8, 3, 7]",
+      "output": "49",
+      "explanation": "Choosing lines at index 1 (height 8) and index 8 (height 7) holds 7 * 8 = 49."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "You are scanning from both ends of one array. Which pattern always moves one of two pointers?"
+    },
+    {
+      "level": 2,
+      "content": "The area is the shorter line times the width. If you keep the shorter line, can any later container beat it?"
+    },
+    {
+      "level": 3,
+      "content": "No. Every container that still uses the shorter line has a smaller width and therefore a smaller area. So the shorter line can be discarded."
+    },
+    {
+      "level": 4,
+      "content": "left = 0, right = n - 1\nbest = 0\nwhile left < right:\n    best = max(best, min(height[left], height[right]) * (right - left))\n    if height[left] < height[right]: left++\n    else: right--"
+    },
+    {
+      "level": 5,
+      "content": "Move the pointer at the shorter line. Moving the taller one would only produce smaller widths against the same bottleneck."
+    }
+  ],
+  "pseudocode": [
+    "left = 0",
+    "right = n - 1",
+    "best = 0",
+    "while left < right:",
+    "    best = max(best, min(height[left], height[right]) * (right - left))",
+    "    if height[left] < height[right]:",
+    "        left = left + 1",
+    "    else:",
+    "        right = right - 1",
+    "return best"
+  ],
+  "timeComplexity": "O(n)",
+  "spaceComplexity": "O(1)",
+  "invariant": "Every container skipped by moving a pointer was provably smaller than one already evaluated, so the best value is never lost.",
+  "whyThisPattern": "The array is not sorted, but the decision does not need it. Comparing the two ends tells you which line is the bottleneck, and the bottleneck line cannot appear in a better container. That is the two pointers decision rule: move the pointer that cannot improve the answer.",
+  "bruteForce": "Try every pair of lines: O(n^2). At n = 100,000 that is about 5 * 10^9 comparisons. Two pointers evaluate at most n containers, which is 50,000 times fewer.",
+  "interviewExplanation": "I start one pointer at each end and evaluate the area as the shorter height times the distance. Then I move the pointer at the shorter line, because any container that keeps that line has a smaller width and can never beat the one I just measured. Each step discards one line permanently, giving O(n) time and O(1) space.",
+  "commonMistakes": [
+    "Moving the pointer at the taller line, which only ever produces smaller areas.",
+    "Using the absolute difference instead of the smaller height.",
+    "Forgetting that width is right - left, not the number of elements between the lines."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "height = [1,8,6,2,5,4,8,3,7]",
+      "expectedOutput": "49",
+      "hidden": false
+    },
+    {
+      "label": "Two lines",
+      "input": "height = [1,1]",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "label": "All zero",
+      "input": "height = [0,0,0,0]",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int maxArea(int[] height) {\n        int left = 0;\n        int right = height.length - 1;\n        int best = 0;\n        while (left < right) {\n            best = Math.max(best, Math.min(height[left], height[right]) * (right - left));\n            if (height[left] < height[right]) {\n                left++;\n            } else {\n                right--;\n            }\n        }\n        return best;\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "What is the area?",
+      "description": "Area = shorter line x distance between the lines.",
+      "text": "The amount of water is the smaller of the two heights multiplied by the distance between the two lines.",
+      "payload": {
+        "lines": [
+          "area = min(left, right) * (rightIndex - leftIndex)"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "POINTER",
+      "title": "Widest container",
+      "description": "Start with the far ends: height 1 and height 7.",
+      "text": "Left pointer at index 0 with height 1, right pointer at index 8 with height 7. The area is 1 times 8, which is 8.",
+      "payload": {
+        "values": [
+          1,
+          8,
+          6,
+          2,
+          5,
+          4,
+          8,
+          3,
+          7
+        ],
+        "pointers": {
+          "left": 0,
+          "right": 8
+        },
+        "highlight": [
+          0,
+          8
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "left height 1, right height 7. Which pointer moves?",
+      "text": "Left is 1 and right is 7. Choose which pointer should move next.",
+      "payload": {
+        "prompt": "left = 1, right = 7. Which line can be discarded?",
+        "options": [
+          "Move left",
+          "Move right",
+          "Move both",
+          "Stop"
+        ],
+        "answerIndex": 0,
+        "explanation": "The shorter line is the bottleneck. Any narrower container keeps the same bottleneck and holds less water."
+      }
+    },
+    {
+      "order": 4,
+      "type": "POINTER",
+      "title": "Move left",
+      "description": "left moves to index 1, height 8.",
+      "text": "Left pointer moves to index 1 with height 8. The area becomes 7 times 7, which is 49, the best so far.",
+      "payload": {
+        "values": [
+          1,
+          8,
+          6,
+          2,
+          5,
+          4,
+          8,
+          3,
+          7
+        ],
+        "pointers": {
+          "left": 1,
+          "right": 8
+        },
+        "highlight": [
+          1,
+          8
+        ]
+      }
+    },
+    {
+      "order": 5,
+      "type": "POINTER",
+      "title": "Now the right is shorter",
+      "description": "right height 7 is smaller than left height 8, so right moves.",
+      "text": "Left is 8 and right is 7, so the right pointer is the bottleneck and moves to index 7 with height 3.",
+      "payload": {
+        "values": [
+          1,
+          8,
+          6,
+          2,
+          5,
+          4,
+          8,
+          3,
+          7
+        ],
+        "pointers": {
+          "left": 1,
+          "right": 7
+        },
+        "highlight": [
+          1,
+          7
+        ]
+      }
+    },
+    {
+      "order": 6,
+      "type": "SUCCESS",
+      "title": "Best area confirmed",
+      "description": "No remaining pair can exceed 49.",
+      "text": "The maximum area found is 49 from the lines at index 1 and index 8, and no later pair was larger.",
+      "payload": {
+        "message": "Maximum area 49 with pointers at index 1 and 8."
+      }
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "slug": "house-robber",
+  "externalId": 198,
+  "title": "House Robber",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "GUIDED",
+  "primaryPattern": "dp",
+  "secondaryPatterns": [],
+  "statement": "You are planning to rob houses on a street where each house holds a certain amount of money. You cannot rob two adjacent houses. Return the maximum amount of money you can rob without alerting the police.",
+  "constraints": [
+    "1 <= nums.length <= 100",
+    "0 <= nums[i] <= 1000"
+  ],
+  "examples": [
+    {
+      "input": "nums = [1, 2, 3, 1]",
+      "output": "4",
+      "explanation": "Rob houses 0 and 2 for a total of 1 + 3 = 4, which beats robbing houses 1 and 3."
+    },
+    {
+      "input": "nums = [2, 7, 9, 3, 1]",
+      "output": "12",
+      "explanation": "Robbing houses 1, 3 and 4 gives 7 + 3 + 1 = 12."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "For each house you either rob it or you skip it. Which pattern turns that choice into a table?"
+    },
+    {
+      "level": 2,
+      "content": "If you rob house i you cannot rob house i - 1, so the best you can do is the best up to i - 2 plus the value of i."
+    },
+    {
+      "level": 3,
+      "content": "If you skip house i you keep the best answer up to i - 1. So dp[i] = max(skip, rob)."
+    },
+    {
+      "level": 4,
+      "content": "rob = 0, skip = 0\nfor value in nums:\n    current = max(skip, rob + value)\n    skip = rob\n    rob = current\nreturn rob"
+    },
+    {
+      "level": 5,
+      "content": "Two variables are enough because the state only depends on the previous two houses."
+    }
+  ],
+  "pseudocode": [
+    "best_skip = 0",
+    "best_rob = 0",
+    "for each house value:",
+    "    current = max(best_skip, best_rob + value)",
+    "    best_skip = best_rob",
+    "    best_rob = current",
+    "return best_rob"
+  ],
+  "timeComplexity": "O(n)",
+  "spaceComplexity": "O(1)",
+  "invariant": "Before each iteration best_rob is the best total achievable from the houses processed so far and best_skip is the best total when the previous house was skipped.",
+  "whyThisPattern": "The choice at each house depends on the same question for earlier houses, so the state has to be stored. The dp table makes the trade-off visible, and since the state only needs the previous entry it collapses into two variables.",
+  "bruteForce": "Deciding every subset of houses is 2^n combinations, and greedy choices such as always taking the richest available house fail on cases like 2, 7, 9, 3, 1. The linear DP handles every case once.",
+  "interviewExplanation": "I keep the best total when the previous house was skipped and the best total when it was robbed. For the current house I either skip it and keep the previous best total, or rob it and add its value to the best total from two houses back. Taking the larger of the two is optimal by construction, and this gives O(n) time with two variables.",
+  "commonMistakes": [
+    "Adding the current value to the immediately previous best total, which allows robbing two adjacent houses.",
+    "Updating both variables in the wrong order so the current value is used twice.",
+    "Assuming the answer must include the richest house, which is not true for every input."
+  ],
+  "testCases": [
+    {
+      "label": "Example 2",
+      "input": "nums = [2,7,9,3,1]",
+      "expectedOutput": "12",
+      "hidden": false
+    },
+    {
+      "label": "Two houses",
+      "input": "nums = [2,9]",
+      "expectedOutput": "9",
+      "hidden": false
+    },
+    {
+      "label": "Single house",
+      "input": "nums = [5]",
+      "expectedOutput": "5",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int rob(int[] nums) {\n        int skip = 0;\n        int rob = 0;\n        for (int value : nums) {\n            int current = Math.max(skip, rob + value);\n            skip = rob;\n            rob = current;\n        }\n        return rob;\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "The decision",
+      "description": "Rob this house or skip it.",
+      "text": "For every house there are exactly two choices: rob it or skip it, and the choices exclude each other.",
+      "payload": {
+        "lines": [
+          "rob house i  ->  cannot rob house i - 1",
+          "skip house i -> keep the best so far"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "House values are 2 then 7. Which total wins after the second house?",
+      "text": "With houses 2 and 7, choose the state after processing both.",
+      "payload": {
+        "prompt": "Houses 2, 7. What is the best total after both are considered?",
+        "options": [
+          "2",
+          "7",
+          "9",
+          "14"
+        ],
+        "answerIndex": 1,
+        "explanation": "Robbing both is not allowed, so the best total is the richer single house, 7."
+      }
+    },
+    {
+      "order": 3,
+      "type": "DP_TABLE",
+      "title": "Table of best totals",
+      "description": "The best total after each house.",
+      "text": "The running bests after each house are 2, 7, 11 and 12.",
+      "payload": {
+        "rowLabels": [
+          "best"
+        ],
+        "colLabels": [
+          "2",
+          "7",
+          "9",
+          "3",
+          "1"
+        ],
+        "cells": [
+          [
+            2,
+            7,
+            11,
+            12
+          ]
+        ],
+        "current": [
+          0,
+          2
+        ]
+      }
+    },
+    {
+      "order": 4,
+      "type": "DP_TABLE",
+      "title": "Why the greedy choice fails",
+      "description": "Always taking the richest house gives 9 then 1, which is worse.",
+      "text": "Greedily robbing 9 and then 1 gives 10, while the dynamic program correctly returns 12 by robbing 7, 3 and 1.",
+      "payload": {
+        "rowLabels": [
+          "greedy",
+          "dp"
+        ],
+        "colLabels": [
+          "2",
+          "7",
+          "9",
+          "3",
+          "1"
+        ],
+        "cells": [
+          [
+            2,
+            7,
+            9,
+            9,
+            10
+          ],
+          [
+            2,
+            7,
+            11,
+            12,
+            12
+          ]
+        ],
+        "current": [
+          1,
+          4
+        ]
+      }
+    },
+    {
+      "order": 5,
+      "type": "SUCCESS",
+      "title": "Answer is 12",
+      "description": "Rob houses at index 1, 3 and 4.",
+      "text": "Robbing 7, 3 and 1 gives 12, which is the maximum without touching two adjacent houses.",
+      "payload": {
+        "message": "Maximum rob amount is 12."
+      }
+    }
+  ]
+}

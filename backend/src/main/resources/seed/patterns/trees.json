@@ -1,0 +1,26 @@
+{
+  "slug": "trees",
+  "name": "Trees",
+  "difficultyOrder": 9,
+  "summary": "Answer the question for a node in terms of the answers for its children. Define what each recursive call returns, handle the empty case, then combine.",
+  "signal": "recursive parent-child structure, depth, diameter, lowest common ancestor",
+  "mentalModel": "If I already knew left and right, what is current? Then solve left, solve right, combine.",
+  "recognitionRules": [
+    "The data has a parent-child structure: binary tree, n-ary tree, trie.",
+    "The question can be asked recursively: max, sum, depth, diameter.",
+    "You need an ancestor of two nodes, or the lowest common one.",
+    "You need a traversal that visits children before or after the parent.",
+    "The answer is defined bottom-up from the leaves."
+  ],
+  "template": [
+    "solve(node):",
+    "    if node is empty:",
+    "        return <base case>",
+    "",
+    "    left  = solve(node.left)",
+    "    right = solve(node.right)",
+    "",
+    "    return combine(left, right, node)"
+  ],
+  "invariant": "Every recursive call returns the correct value for its own subtree, so the parent only has to combine."
+}

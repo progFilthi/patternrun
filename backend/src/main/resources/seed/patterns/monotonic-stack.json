@@ -1,0 +1,25 @@
+{
+  "slug": "monotonic-stack",
+  "name": "Monotonic Stack",
+  "difficultyOrder": 6,
+  "summary": "A stack of elements that are waiting for an answer. Each new value resolves the waiting elements it is greater (or smaller) than, so no element is ever examined more than twice.",
+  "signal": "next greater, next smaller, previous greater, previous smaller, histogram boundaries",
+  "mentalModel": "The stack holds elements that are waiting. A new value answers whoever it dominates.",
+  "recognitionRules": [
+    "The question asks for the next / previous greater or smaller element.",
+    "Some elements are waiting for an answer that a later element will provide.",
+    "You need the largest rectangle in a histogram, or similar boundary problems.",
+    "The input arrives one element at a time and each element may be answered later.",
+    "Nested loops are needed in the brute force version: O(n^2) becomes O(n)."
+  ],
+  "template": [
+    "stack = []   // stores indices",
+    "",
+    "for i, value in enumerate(input):",
+    "    while stack is not empty and input[stack.top] is dominated by value:",
+    "        resolve(stack.pop())          // value is the answer for this index",
+    "",
+    "    stack.push(i)"
+  ],
+  "invariant": "The stack maintains a strictly monotonic order of the values it holds."
+}

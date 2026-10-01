@@ -1,0 +1,282 @@
+{
+  "slug": "number-of-islands",
+  "externalId": 200,
+  "title": "Number of Islands",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "RECOGNITION",
+  "primaryPattern": "bfs-dfs",
+  "secondaryPatterns": [],
+  "statement": "Given an m x n grid of '1' (land) and '0' (water), return the number of islands. An island is a group of connected '1's using only up, down, left and right connections.",
+  "constraints": [
+    "1 <= m, n <= 300",
+    "m * n <= 300 * 300",
+    "Cells are either '0' or '1'"
+  ],
+  "examples": [
+    {
+      "input": "grid = [[\"1\",\"1\",\"0\",\"0\"],[\"0\",\"1\",\"0\",\"0\"],[\"1\",\"0\",\"0\",\"0\"]]",
+      "output": "3",
+      "explanation": "There are two small islands in the top left and one in the bottom left."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "What you are counting is the number of connected components. Which traversal finds components?"
+    },
+    {
+      "level": 2,
+      "content": "Every time you find land that has not been visited, you have found a new island. Then you must mark everything reachable from it."
+    },
+    {
+      "level": 3,
+      "content": "DFS with recursion, or BFS with a queue. Either way you mark cells visited as soon as you add them to the traversal."
+    },
+    {
+      "level": 4,
+      "content": "count = 0\nfor each cell:\n    if cell == '1':\n        count++\n        floodFill(cell)   // mark the whole island as '0'\nreturn count"
+    },
+    {
+      "level": 5,
+      "content": "Changing visited land to '0' in place avoids a separate visited array, but be careful because it modifies the input grid."
+    }
+  ],
+  "pseudocode": [
+    "count = 0",
+    "for each row and column:",
+    "    if cell is land:",
+    "        count = count + 1",
+    "        floodFill from this cell, turning every reachable land into water",
+    "return count"
+  ],
+  "timeComplexity": "O(m * n)",
+  "spaceComplexity": "O(m * n)",
+  "invariant": "After each flood fill, every cell belonging to the island just counted is marked, so no island can be counted twice.",
+  "whyThisPattern": "The question is a component count, and DFS or BFS is the standard way to explore a component. Marking on insert rather than on removal guarantees each cell is visited once, which keeps the whole grid linear.",
+  "bruteForce": "Comparing each land cell against every other land cell to decide if they are connected is O((m * n)^2) in the worst case and can also miss connectivity through long chains. A single traversal touches each cell at most four times.",
+  "interviewExplanation": "I scan the grid and every time I find an unvisited land cell I count a new island and flood fill from it, marking all reachable land as visited. Using a stack for the flood fill avoids deep recursion on a large grid, and marking a cell visited when it is pushed means it is never processed twice. This gives O(m * n) time.",
+  "commonMistakes": [
+    "Marking cells visited when they are popped instead of when they are pushed, which causes repeated work.",
+    "Using diagonal neighbours, which counts diagonally touching land as one island.",
+    "Forgetting to count the island before starting the flood fill."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "grid = [[\"1\",\"1\",\"0\",\"0\"],[\"0\",\"1\",\"0\",\"0\"],[\"1\",\"0\",\"0\",\"0\"]]",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "label": "Single cell land",
+      "input": "grid = [[\"1\"]]",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "label": "All water",
+      "input": "grid = [[\"0\",\"0\"],[\"0\",\"0\"]]",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int numIslands(char[][] grid) {\n        int count = 0;\n        for (int row = 0; row < grid.length; row++) {\n            for (int col = 0; col < grid[row].length; col++) {\n                if (grid[row][col] == '1') {\n                    count++;\n                    fill(grid, row, col);\n                }\n            }\n        }\n        return count;\n    }\n\n    private void fill(char[][] grid, int row, int col) {\n        if (row < 0 || col < 0 || row >= grid.length || col >= grid[row].length || grid[row][col] != '1') {\n            return;\n        }\n        grid[row][col] = '0';\n        fill(grid, row + 1, col);\n        fill(grid, row - 1, col);\n        fill(grid, row, col + 1);\n        fill(grid, row, col - 1);\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "GRAPH",
+      "title": "The grid is a graph",
+      "description": "Each land cell is a node, neighbours are up, down, left, right.",
+      "text": "The grid is a graph where land cells are connected to their four neighbours.",
+      "payload": {
+        "cells": [
+          [
+            "1",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "visited": [],
+        "queue": []
+      }
+    },
+    {
+      "order": 2,
+      "type": "GRAPH",
+      "title": "First island found",
+      "description": "Land at row 0, column 0 starts a new island.",
+      "text": "Cell row 0 column 0 is land and has not been visited, so island count becomes 1.",
+      "payload": {
+        "cells": [
+          [
+            "1",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "visited": [],
+        "queue": [
+          [
+            0,
+            0
+          ]
+        ],
+        "current": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "type": "GRAPH",
+      "title": "Flood fill the component",
+      "description": "The traversal marks all three connected land cells.",
+      "text": "Flood fill from row 0 column 0 visits row 0 column 1 and row 1 column 1, so that island contains three cells.",
+      "payload": {
+        "cells": [
+          [
+            "1",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "visited": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "queue": []
+      }
+    },
+    {
+      "order": 4,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "Back at the scan position: is the bottom left cell a new island?",
+      "text": "Cell row 2 column 0 is land and is not connected to the first island. Choose what happens next.",
+      "payload": {
+        "prompt": "Row 2, column 0 is land with no visited neighbours. What happens?",
+        "options": [
+          "Count a new island",
+          "Skip it",
+          "Extend the first island",
+          "Restart the whole grid"
+        ],
+        "answerIndex": 0,
+        "explanation": "Unvisited land that is not connected to a counted island always starts a new island."
+      }
+    },
+    {
+      "order": 5,
+      "type": "GRAPH",
+      "title": "Three islands total",
+      "description": "Two small islands and one single cell island.",
+      "text": "The scan finds three islands: the two cell island in the top left, the single cell island below it and the single cell island at row 2 column 0.",
+      "payload": {
+        "cells": [
+          [
+            "1",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0",
+            "0"
+          ]
+        ],
+        "visited": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            0
+          ]
+        ],
+        "queue": []
+      }
+    },
+    {
+      "order": 6,
+      "type": "SUCCESS",
+      "title": "Component count complete",
+      "description": "Each land cell was visited exactly once.",
+      "text": "The answer is 3 islands and every land cell was visited exactly once during the traversal.",
+      "payload": {
+        "message": "Number of islands is 3."
+      }
+    }
+  ]
+}

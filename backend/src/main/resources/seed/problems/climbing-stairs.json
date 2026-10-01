@@ -1,0 +1,203 @@
+{
+  "slug": "climbing-stairs",
+  "externalId": 70,
+  "title": "Climbing Stairs",
+  "difficulty": "EASY",
+  "trainingDifficulty": "RECOGNITION",
+  "primaryPattern": "dp",
+  "secondaryPatterns": [],
+  "statement": "You are climbing a staircase with n steps. You can climb one or two steps at a time. How many distinct ways can you reach the top of the staircase?",
+  "constraints": [
+    "1 <= n <= 45",
+    "The answer fits in a 32-bit integer"
+  ],
+  "examples": [
+    {
+      "input": "n = 2",
+      "output": "2",
+      "explanation": "One way is 1 + 1 and the other is 2."
+    },
+    {
+      "input": "n = 5",
+      "output": "8",
+      "explanation": "The number of ways grows like the Fibonacci sequence: 1, 2, 3, 5, 8."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "Counting the ways to reach a step means asking the same question about earlier steps. Which pattern is about answering the same question twice?"
+    },
+    {
+      "level": 2,
+      "content": "To reach step i you must come from step i - 1 or from step i - 2. Those are the only two possibilities."
+    },
+    {
+      "level": 3,
+      "content": "So the ways to reach step i equal the ways to reach step i - 1 plus the ways to reach step i - 2. Write that in one sentence before coding."
+    },
+    {
+      "level": 4,
+      "content": "ways[0] = 1\nways[1] = 1\nfor i from 2 to n:\n    ways[i] = ways[i - 1] + ways[i - 2]\nreturn ways[n]"
+    },
+    {
+      "level": 5,
+      "content": "Only the previous two values are needed, so two variables are enough. Writing the full table first is still useful for understanding."
+    }
+  ],
+  "pseudocode": [
+    "ways[i] = number of ways to reach step i",
+    "ways[0] = 1",
+    "ways[1] = 1",
+    "for each step i from 2 to n:",
+    "    ways[i] = ways[i - 1] + ways[i - 2]",
+    "return ways[n]"
+  ],
+  "timeComplexity": "O(n)",
+  "spaceComplexity": "O(1)",
+  "invariant": "Every entry stores the exact number of ways to reach its own step, so the final entry is the answer.",
+  "whyThisPattern": "The naive recursive solution recomputes the same values many times: ways(40) calls ways(39) and ways(38), which each recompute their own overlap. Storing the answer for each step once is the entire point of dynamic programming.",
+  "bruteForce": "Naive recursion has exponential time: for n = 40 it makes about 330 million calls. Memoisation or an iterative table reduces that to 40 operations, which is why this problem is the standard DP example.",
+  "interviewExplanation": "I define ways[i] as the number of ways to reach step i, and the last move must come from step i - 1 or step i - 2, so ways[i] is the sum of those two values. I initialise the base cases and fill the table in order, keeping only the previous two values because those are all the next value depends on. This gives O(n) time and O(1) space.",
+  "commonMistakes": [
+    "Setting ways[0] to 0, which makes every other answer 0 as well.",
+    "Starting the loop at i = 1 instead of 2, so base cases are overwritten before they are used.",
+    "Trying a greedy choice such as always taking two steps, which does not match the total."
+  ],
+  "testCases": [
+    {
+      "label": "Example 2",
+      "input": "n = 5",
+      "expectedOutput": "8",
+      "hidden": false
+    },
+    {
+      "label": "Single step",
+      "input": "n = 1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "label": "Large n",
+      "input": "n = 45",
+      "expectedOutput": "1836311903",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int climbStairs(int n) {\n        int previous = 1;\n        int current = 1;\n        for (int step = 2; step <= n; step++) {\n            int next = previous + current;\n            previous = current;\n            current = next;\n        }\n        return current;\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "What is the state?",
+      "description": "dp[i] = the number of ways to reach step i.",
+      "text": "The state is the number of ways to reach step i. It is asked and answered for every step.",
+      "payload": {
+        "lines": [
+          "dp[i] = ways to reach step i"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "What are the only two ways to arrive at step i?",
+      "text": "Choose where the final move must come from.",
+      "payload": {
+        "prompt": "The last move onto step i is either one step or two steps. What is dp[i]?",
+        "options": [
+          "dp[i - 1] + dp[i - 2]",
+          "dp[i - 1] * dp[i - 2]",
+          "dp[i - 1] + 1",
+          "dp[i - 2] + 1"
+        ],
+        "answerIndex": 0,
+        "explanation": "Every path ends with a step from i - 1 or a step from i - 2, so both sets of paths are added."
+      }
+    },
+    {
+      "order": 3,
+      "type": "DP_TABLE",
+      "title": "Base cases",
+      "description": "dp[0] = 1 and dp[1] = 1.",
+      "text": "There is one way to be at step 0, doing nothing, and one way to be at step 1.",
+      "payload": {
+        "rowLabels": [
+          "i"
+        ],
+        "colLabels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "cells": [
+          [
+            1,
+            1,
+            "?",
+            "?",
+            "?",
+            "?"
+          ]
+        ],
+        "current": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "order": 4,
+      "type": "DP_TABLE",
+      "title": "Fill the table",
+      "description": "Each cell is the sum of the two cells before it.",
+      "text": "Filling the table gives 1, 1, 2, 3, 5, 8, which is the Fibonacci sequence shifted by one position.",
+      "payload": {
+        "rowLabels": [
+          "i"
+        ],
+        "colLabels": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "cells": [
+          [
+            1,
+            1,
+            2,
+            3,
+            5,
+            8
+          ]
+        ],
+        "current": [
+          0,
+          5
+        ]
+      }
+    },
+    {
+      "order": 5,
+      "type": "SUCCESS",
+      "title": "Answer is dp[5] = 8",
+      "description": "Eight distinct ways to climb five steps.",
+      "text": "There are 8 ways to climb five steps, computed with 5 additions instead of an exponential recursion tree.",
+      "payload": {
+        "message": "climbStairs(5) = 8 in O(n) time and O(1) space."
+      }
+    }
+  ]
+}

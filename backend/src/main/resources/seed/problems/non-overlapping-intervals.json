@@ -1,0 +1,268 @@
+{
+  "slug": "non-overlapping-intervals",
+  "externalId": 435,
+  "title": "Non-overlapping Intervals",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "GUIDED",
+  "primaryPattern": "intervals",
+  "secondaryPatterns": [],
+  "statement": "Given an array of intervals where intervals[i] = [start_i, end_i], return the minimum number of intervals you must remove to make the remaining intervals non-overlapping.",
+  "constraints": [
+    "1 <= intervals.length <= 10^5",
+    "0 <= start_i < end_i <= 10^5"
+  ],
+  "examples": [
+    {
+      "input": "intervals = [[1,2],[2,3],[3,4],[4,5]]",
+      "output": "1",
+      "explanation": "Removing one interval, for example [2,3], leaves the rest non-overlapping."
+    },
+    {
+      "input": "intervals = [[1,2],[1,3],[1,4]]",
+      "output": "2",
+      "explanation": "All three share the point 1, so only one interval can survive."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "This is the merge problem turned around: instead of combining overlapping intervals, you keep some and count what you throw away."
+    },
+    {
+      "level": 2,
+      "content": "Sorting by end, not by start, is what makes a greedy choice possible."
+    },
+    {
+      "level": 3,
+      "content": "The earliest finishing interval leaves the most room for everything after it, so keep it and remove whatever overlaps it."
+    },
+    {
+      "level": 4,
+      "content": "sort intervals by end\nkept = 0\nlastEnd = Integer.MIN_VALUE\nfor interval in intervals:\n    if interval[0] >= lastEnd:\n        kept++\n        lastEnd = interval[1]\nreturn intervals.length - kept"
+    },
+    {
+      "level": 5,
+      "content": "Using >= instead of > allows two intervals to share an endpoint, which counts as non-overlapping here."
+    }
+  ],
+  "pseudocode": [
+    "sort intervals by end",
+    "lastEnd = negative infinity",
+    "kept = 0",
+    "for each interval:",
+    "    if interval.start >= lastEnd:",
+    "        kept = kept + 1",
+    "        lastEnd = interval.end",
+    "return n - kept"
+  ],
+  "timeComplexity": "O(n log n)",
+  "spaceComplexity": "O(1)",
+  "invariant": "lastEnd is the end of the last kept interval, and every kept interval starts at or after it, so the kept set is always non-overlapping.",
+  "whyThisPattern": "The interval pattern supplies the sort plus the overlap test. Sorting by end turns the choice into a greedy one: the interval that finishes earliest can never be worse than any interval that finishes later, which proves the optimality.",
+  "bruteForce": "Try every subset of intervals and check each for overlaps is exponential. Even trying all n choices for the first interval is O(n^2). Sorting by end with a single scan is O(n log n).",
+  "interviewExplanation": "I sort the intervals by their end time and greedily keep every interval that starts at or after the end of the last one I kept. Choosing the interval that ends earliest is optimal because it leaves the most space for everything after it, so no other choice can allow more intervals to be kept. The number of removals is the total count minus the number kept.",
+  "commonMistakes": [
+    "Sorting by start instead of end, which prevents the greedy choice.",
+    "Using > instead of >= so intervals that touch at an endpoint are treated as overlapping.",
+    "Counting kept intervals as the answer instead of counting removals."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "intervals = [[1,2],[2,3],[3,4],[4,5]]",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "label": "All overlapping",
+      "input": "intervals = [[1,2],[1,3],[1,4]]",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "label": "No overlap",
+      "input": "intervals = [[1,3],[4,6],[7,9]]",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int eraseOverlapIntervals(int[][] intervals) {\n        Arrays.sort(intervals, Comparator.comparingInt(interval -> interval[1]));\n        int kept = 0;\n        int lastEnd = Integer.MIN_VALUE;\n        for (int[] interval : intervals) {\n            if (interval[0] >= lastEnd) {\n                kept++;\n                lastEnd = interval[1];\n            }\n        }\n        return intervals.length - kept;\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "INTERVAL",
+      "title": "Sort by end",
+      "description": "Earliest finishing intervals come first.",
+      "text": "After sorting by end the intervals are 1-2, 2-3, 3-4 and 4-5.",
+      "payload": {
+        "intervals": [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "highlight": 0,
+        "merged": []
+      }
+    },
+    {
+      "order": 2,
+      "type": "INTERVAL",
+      "title": "Keep the first",
+      "description": "Nothing overlaps it, so it is kept.",
+      "text": "The interval from 1 to 2 is kept because there is no earlier interval to conflict with.",
+      "payload": {
+        "intervals": [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "highlight": 0,
+        "merged": [
+          [
+            1,
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "type": "INTERVAL",
+      "title": "Touching is allowed",
+      "description": "The interval starting at 2 begins exactly where the last kept ends.",
+      "text": "The interval from 2 to 3 starts exactly at the end of the kept interval, so it is kept as well because touching endpoints are allowed.",
+      "payload": {
+        "intervals": [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "highlight": 1,
+        "merged": [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "order": 4,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "An interval overlaps the last kept one. Keep or remove?",
+      "text": "Consider intervals 1 to 10 and 2 to 4 after sorting by end. Choose which one survives.",
+      "payload": {
+        "prompt": "Two overlapping intervals: 1-10 and 2-4. Which do you keep?",
+        "options": [
+          "Keep 1-10",
+          "Keep 2-4",
+          "Keep both",
+          "Remove both"
+        ],
+        "answerIndex": 1,
+        "explanation": "Keeping the interval that ends earliest leaves the most room for the rest."
+      }
+    },
+    {
+      "order": 5,
+      "type": "INTERVAL",
+      "title": "Count what you throw away",
+      "description": "Removals equal the total number of intervals minus the number kept.",
+      "text": "For the example, three intervals are kept out of four, so exactly one interval must be removed.",
+      "payload": {
+        "intervals": [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "highlight": 3,
+        "merged": [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "order": 6,
+      "type": "SUCCESS",
+      "title": "Minimum removals",
+      "description": "One removal is both necessary and sufficient.",
+      "text": "Removing one interval makes the rest non-overlapping, and the greedy scan proves that no solution can remove fewer.",
+      "payload": {
+        "message": "Minimum removals is 1."
+      }
+    }
+  ]
+}

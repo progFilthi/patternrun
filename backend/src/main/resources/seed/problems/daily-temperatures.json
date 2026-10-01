@@ -1,0 +1,187 @@
+{
+  "slug": "daily-temperatures",
+  "externalId": 739,
+  "title": "Daily Temperatures",
+  "difficulty": "MEDIUM",
+  "trainingDifficulty": "RECOGNITION",
+  "primaryPattern": "monotonic-stack",
+  "secondaryPatterns": [],
+  "statement": "Given an array of daily temperatures, return an array where each entry tells you how many days you must wait for a warmer day. If there is no future day that is warmer, use 0.",
+  "constraints": [
+    "1 <= temperatures.length <= 10^5",
+    "30 <= temperatures[i] <= 100"
+  ],
+  "examples": [
+    {
+      "input": "temperatures = [73, 74, 75, 71, 69, 72, 76, 73]",
+      "output": "[1, 1, 4, 2, 1, 1, 0, 0]",
+      "explanation": "For 71 the next warmer day is 72 two days later, so the answer is 2."
+    },
+    {
+      "input": "temperatures = [30, 40, 50, 60]",
+      "output": "[1, 1, 1, 0]",
+      "explanation": "Each day is warmer than the previous one, so each waits a single day."
+    }
+  ],
+  "hints": [
+    {
+      "level": 1,
+      "content": "Every day is waiting for one specific future value: the first day that is warmer. What structure keeps elements that are still waiting?"
+    },
+    {
+      "level": 2,
+      "content": "A stack stores the indices of days that have not found their warmer day yet."
+    },
+    {
+      "level": 3,
+      "content": "When a new temperature arrives it answers every waiting day that is colder than it. Those days form the top of the stack."
+    },
+    {
+      "level": 4,
+      "content": "answer = zeros(n)\nstack = []   // indices\nfor i, temp in enumerate(temperatures):\n    while stack and temperatures[stack[-1]] < temp:\n        j = stack.pop()\n        answer[j] = i - j\n    stack.push(i)"
+    },
+    {
+      "level": 5,
+      "content": "Use < and not <= so that equal temperatures are treated as not warmer, which matches the problem statement."
+    }
+  ],
+  "pseudocode": [
+    "answer = array of zeros",
+    "stack = empty stack of indices",
+    "for each index i from 0 to n - 1:",
+    "    while stack is not empty and temperature[stack.top] < temperature[i]:",
+    "        j = stack.pop()",
+    "        answer[j] = i - j",
+    "    stack.push(i)",
+    "return answer"
+  ],
+  "timeComplexity": "O(n)",
+  "spaceComplexity": "O(n)",
+  "invariant": "The stack holds indices in increasing order whose temperatures are strictly decreasing, so each waiting day is on top of any colder waiting day.",
+  "whyThisPattern": "The question asks for the next greater element for every position at once, which is the textbook monotonic stack signal. Each index is pushed once and popped once, so the nested loop of the brute force version disappears.",
+  "bruteForce": "For every day, scan forward until you find something warmer: O(n^2). At n = 100,000 that is about 5 * 10^9 comparisons. The stack version performs at most 2n stack operations.",
+  "interviewExplanation": "I keep a stack of day indices whose warmer day has not been found yet, and the temperatures on the stack are strictly decreasing from bottom to top. When a new day arrives it is warmer than every colder day on top of the stack, so I pop those days and record the distance, then push the new day. Each index is pushed and popped once, giving O(n) time and O(n) space.",
+  "commonMistakes": [
+    "Recording the answer with <= so that equal temperatures are treated as warmer.",
+    "Pushing the temperature instead of the index, which makes the distance impossible to compute.",
+    "Popping only once per new day instead of using a while loop, which misses several waiting days."
+  ],
+  "testCases": [
+    {
+      "label": "Example 1",
+      "input": "temperatures = [73,74,75,71,69,72,76,73]",
+      "expectedOutput": "[1,1,4,2,1,1,0,0]",
+      "hidden": false
+    },
+    {
+      "label": "All equal",
+      "input": "temperatures = [50,50,50]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": false
+    },
+    {
+      "label": "Decreasing",
+      "input": "temperatures = [90,80,70]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    }
+  ],
+  "solutions": [
+    {
+      "language": "JAVA",
+      "code": "class Solution {\n    public int[] dailyTemperatures(int[] temperatures) {\n        int[] answer = new int[temperatures.length];\n        Deque<Integer> stack = new ArrayDeque<>();\n        for (int i = 0; i < temperatures.length; i++) {\n            while (!stack.isEmpty() && temperatures[stack.peek()] < temperatures[i]) {\n                int j = stack.pop();\n                answer[j] = i - j;\n            }\n            stack.push(i);\n        }\n        return answer;\n    }\n}"
+    }
+  ],
+  "animationSteps": [
+    {
+      "order": 1,
+      "type": "TEXT",
+      "title": "Days that are waiting",
+      "description": "Each day waits for the first warmer day to appear.",
+      "text": "Every day is a question: when is the first future day that is warmer than me?",
+      "payload": {
+        "lines": [
+          "waiting for a warmer day"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "type": "STACK",
+      "title": "Day 0 waits",
+      "description": "Stack holds index 0, temperature 73.",
+      "text": "Index 0 with temperature 73 is pushed onto the stack because no warmer day has appeared yet.",
+      "payload": {
+        "items": [
+          0
+        ],
+        "top": 0
+      }
+    },
+    {
+      "order": 3,
+      "type": "STACK",
+      "title": "A warmer day answers the stack",
+      "description": "74 pops 73, so index 0 waits 1 day.",
+      "text": "Temperature 74 is warmer than 73, so index 0 is resolved with the answer 1 and the stack becomes empty.",
+      "payload": {
+        "items": [],
+        "top": -1
+      }
+    },
+    {
+      "order": 4,
+      "type": "QUESTION",
+      "title": "Predict the move",
+      "description": "71 arrives while 75 is waiting.",
+      "text": "The stack holds index 2 with temperature 75 and the new temperature is 71. Choose the next operation.",
+      "payload": {
+        "prompt": "stack = [2] with temperature 75, new temperature = 71. What happens?",
+        "options": [
+          "Pop 2 and answer 1",
+          "Pop 2 and answer 4",
+          "Push 3 and keep 2",
+          "Reset the stack"
+        ],
+        "answerIndex": 2,
+        "explanation": "71 is colder than 75, so day 2 keeps waiting and 71 joins the stack."
+      }
+    },
+    {
+      "order": 5,
+      "type": "STACK",
+      "title": "Monotonic order",
+      "description": "The stack holds temperatures 75, 71, 69 from bottom to top.",
+      "text": "The stack holds indices 2, 3, 4 with temperatures 75, 71, 69, which is strictly decreasing from bottom to top.",
+      "payload": {
+        "items": [
+          2,
+          3,
+          4
+        ],
+        "top": 4
+      }
+    },
+    {
+      "order": 6,
+      "type": "STACK",
+      "title": "One day resolves three entries",
+      "description": "72 resolves 69 and 71, then 76 resolves the rest.",
+      "text": "Temperature 72 pops index 4 with distance 1 and index 3 with distance 2, then 76 pops index 2 with distance 4, giving the answer [1, 1, 4, 2, 1, 1, 0, 0].",
+      "payload": {
+        "items": [],
+        "top": -1
+      }
+    },
+    {
+      "order": 7,
+      "type": "SUCCESS",
+      "title": "Every day answered once",
+      "description": "Index 6 and 7 keep their default 0.",
+      "text": "Days 6 and 7 never find a warmer day, so they keep the answer 0, which is the correct result.",
+      "payload": {
+        "message": "Answer [1, 1, 4, 2, 1, 1, 0, 0] computed with each index pushed and popped once."
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+package com.patternrun.problem;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/** Reference implementation, revealed only at hint level 5. */
+@Entity
+@Table(name = "problem_solutions")
+@Getter
+@Setter
+@NoArgsConstructor
+public class ProblemSolutionEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "problem_id", nullable = false)
+    private ProblemEntity problem;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProgrammingLanguage language;
+
+    @Column(nullable = false)
+    private String code;
+}

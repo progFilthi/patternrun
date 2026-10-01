@@ -1,0 +1,27 @@
+{
+  "slug": "intervals",
+  "name": "Intervals",
+  "difficultyOrder": 5,
+  "summary": "Sort by start, then scan once while deciding whether the current interval overlaps, extends, or is contained. Interval problems are sorting problems with a merge decision attached.",
+  "signal": "meetings, schedules, overlap, merge, insert, ranges, start/end",
+  "mentalModel": "SORT FIRST, then SCAN, then ask OVERLAP?, then MERGE.",
+  "recognitionRules": [
+    "Input is a list of start/end pairs.",
+    "You must merge overlapping ranges.",
+    "You must find how many rooms or meetings are needed.",
+    "You must remove the minimum number of intervals so nothing overlaps.",
+    "You must insert a new interval into an already sorted schedule."
+  ],
+  "template": [
+    "sort intervals by start",
+    "",
+    "merged = []",
+    "",
+    "for interval in intervals:",
+    "    if merged is empty or interval.start > last(merged).end:",
+    "        merged.add(interval)          // no overlap",
+    "    else:",
+    "        last(merged).end = max(last(merged).end, interval.end)   // overlap, merge"
+  ],
+  "invariant": "merged holds the disjoint answer for everything processed so far, in sorted order."
+}

@@ -1,0 +1,26 @@
+{
+  "slug": "dp",
+  "name": "Dynamic Programming",
+  "difficultyOrder": 10,
+  "summary": "Spot a repeated subproblem, name the state that stores its answer, and write the transition from smaller states. Recursion with memoization first if it is easier to see; a table once the state is clear.",
+  "signal": "repeated subproblems, overlapping choices, 'what does dp[i] mean?'",
+  "mentalModel": "STATE + TRANSITION + BASE CASE. Write the meaning of dp[i] before writing any code.",
+  "recognitionRules": [
+    "The same subproblem is computed again and again (naive recursion is exponential).",
+    "The answer is built from answers to smaller versions of the same question.",
+    "The problem asks for the number of ways, the minimum cost, or the maximum value.",
+    "A greedy choice is not obviously correct.",
+    "You can say the whole answer as 'what is dp[n]?'"
+  ],
+  "template": [
+    "define dp[i] in one sentence",
+    "",
+    "base cases: dp[0] ...",
+    "",
+    "for each state:",
+    "    dp[i] = transition(dp of earlier states)",
+    "",
+    "return dp[n]"
+  ],
+  "invariant": "Each state stores the best or required answer for its own definition."
+}

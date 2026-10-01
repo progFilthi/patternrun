@@ -1,0 +1,28 @@
+{
+  "slug": "hashing",
+  "name": "Hashing",
+  "difficultyOrder": 1,
+  "summary": "Turn a 'have I seen this before?' question into an average O(1) lookup. Scan the input once, remember what is already known, and answer each element with a lookup instead of a search. The same idea covers prefix sums: remember prefix totals so any range becomes one subtraction.",
+  "signal": "counts, complements, fast lookup, 'have I seen this value before?'",
+  "mentalModel": "I need fast lookup. What have I already seen?",
+  "recognitionRules": [
+    "The question can be rewritten as 'have I seen this value before?'",
+    "A brute force solution needs a nested scan (O(n^2)) only to search for a value.",
+    "You can compute the value you need from the current element (target - current, prefix sum, frequency).",
+    "The answer only needs a count or an index, not a sorted order.",
+    "Duplicates matter and you need to count, group, or deduplicate them.",
+    "The question asks for a sum, count or average over a contiguous range (prefix sums)."
+  ],
+  "template": [
+    "seen = {}",
+    "",
+    "for item in input:",
+    "    calculate the value we need",
+    "",
+    "    if needed exists in seen:",
+    "        use it",
+    "",
+    "    store current item in seen"
+  ],
+  "invariant": "The data structure represents exactly the information seen so far, and nothing else."
+}

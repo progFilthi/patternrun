@@ -1,0 +1,25 @@
+{
+  "slug": "heap",
+  "name": "Heap / Top K",
+  "difficultyOrder": 7,
+  "summary": "Keep only the K best elements in a priority queue. You never need the whole order, only the top K, so you never pay for a full sort.",
+  "signal": "top K, kth largest/smallest, k closest, repeatedly remove min or max",
+  "mentalModel": "Priority queue that keeps the K elements that matter right now.",
+  "recognitionRules": [
+    "The question asks for the K largest, smallest, most frequent or closest items.",
+    "The input arrives as a stream and you must answer at any moment.",
+    "You repeatedly remove the smallest or largest element.",
+    "You need the median of a changing dataset.",
+    "Sorting everything is possible but the question only cares about K elements."
+  ],
+  "template": [
+    "heap = new PriorityQueue<>()   // min-heap by default",
+    "",
+    "for item in input:",
+    "    heap.push(item)",
+    "",
+    "    if heap.size() > k:",
+    "        heap.pop()      // drop the worst element we no longer need"
+  ],
+  "invariant": "The heap always holds the K best elements seen so far."
+}
