@@ -3,9 +3,9 @@
 Problem content is the product. This guide describes the contract for a single file in
 `backend/src/main/resources/seed/problems/<slug>.json`.
 
-The migration `V2__seed_content` rejects incomplete content, so a file that violates this
-contract fails the build. `SeedContentIT` re-checks the acceptance criteria of README
-section 92.
+`SeedContentReader` rejects incomplete content on startup, so a file that violates this contract
+fails the build. `SeedContentReaderTest` checks the files and `SeedContentIT` re-checks the
+acceptance criteria of README section 92 against the database.
 
 ## Writing order
 
@@ -41,7 +41,7 @@ order:
 | `bruteForce` | names the brute force complexity and a concrete operation count |
 | `commonMistakes` | at least 2, each one sentence |
 | `testCases` | at least 2, at least one `hidden: true` |
-| `solutions` | at least one `JAVA` reference solution |
+| `solutions` | at least one `JAVA` reference solution, stored as content only |
 | `animationSteps` | at least 5, ordered, each with a `text` alternative, at least one `QUESTION` |
 
 ## Hints
@@ -77,8 +77,8 @@ A Medium problem can be `RECOGNITION` if the learner is new to the pattern.
 2. If the pattern does not exist yet, create its file under `seed/patterns/`.
 3. Run `cd backend && ./mvnw verify`.
 
-Existing seeded content is not re-applied to a database that already ran migration V2. For a
-local reset:
+`ContentSeeder` skips when content is already present, so a content change only reaches a clean
+database. For a local reset:
 
 ``` bash
 docker compose down -v && docker compose up -d postgres

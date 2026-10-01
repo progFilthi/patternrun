@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.patternrun.content.ContentSeeder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -17,6 +18,40 @@ class SeedContentIT extends ApiIntegrationTestBase {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private ContentSeeder contentSeeder;
+
+    @Test
+    @DisplayName("The seed pass is idempotent: running it again changes nothing")
+    void seedPassIsIdempotent() {
+        List<Map<String, Object>> before = contentRowCounts();
+        int problemsBefore = countProblems();
+
+        contentSeeder.seed();
+
+        assertThat(contentRowCounts()).isEqualTo(before);
+        assertThat(countProblems()).isEqualTo(problemsBefore);
+    }
+
+    private int countProblems() {
+        Integer count = jdbcTemplate.queryForObject("SELECT count(*) FROM problems", Integer.class);
+        return count == null ? 0 : count;
+    }
+
+    private List<Map<String, Object>> contentRowCounts() {
+        return jdbcTemplate.queryForList("""
+                SELECT (SELECT count(*) FROM patterns)                                        AS patterns,
+                       (SELECT count(*) FROM problems)                                        AS problems,
+                       (SELECT count(*) FROM problem_examples)                                AS examples,
+                       (SELECT count(*) FROM problem_hints)                                   AS hints,
+                       (SELECT count(*) FROM problem_animation_steps)                         AS steps,
+                       (SELECT count(*) FROM problem_test_cases)                              AS test_cases,
+                       (SELECT count(*) FROM problem_test_cases WHERE is_hidden)              AS hidden_cases,
+                       (SELECT count(*) FROM problem_solutions)                               AS solutions,
+                       (SELECT count(*) FROM problem_secondary_patterns)                      AS secondary_links
+                """);
+    }
 
     @Test
     @DisplayName("The ten core patterns are seeded with mental model, signals and a template")

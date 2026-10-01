@@ -1,7 +1,7 @@
 package com.patternrun.problem;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.patternrun.pattern.PatternEntity;
 import com.patternrun.pattern.PatternMapper;
 import com.patternrun.pattern.dto.PatternRef;

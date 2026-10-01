@@ -1,18 +1,25 @@
 package com.patternrun.problem;
 
 import static org.hamcrest.Matchers.contains;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.patternrun.support.ApiIntegrationTestBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 class ProblemApiIT extends ApiIntegrationTestBase {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     @DisplayName("GET /api/v1/problems returns a paginated list ordered by problem number")
@@ -115,6 +122,51 @@ class ProblemApiIT extends ApiIntegrationTestBase {
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[*].label", contains("Example 1", "Negative values")))
                 .andExpect(jsonPath("$[*].isHidden").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("No endpoint leaks a hidden test case")
+    void neverExposesHiddenTestCases() throws Exception {
+        Integer hiddenCases = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM problem_test_cases WHERE is_hidden", Integer.class);
+        assertThat(hiddenCases).isPositive();
+
+        String[] problemSlugs = {"two-sum", "climbing-stairs", "minimum-window-substring", "number-of-islands"};
+        for (String slug : problemSlugs) {
+            Integer total = jdbcTemplate.queryForObject(
+                    "SELECT count(*) FROM problem_test_cases t JOIN problems p ON p.id = t.problem_id"
+                            + " WHERE p.slug = ?", Integer.class, slug);
+            Integer visible = jdbcTemplate.queryForObject(
+                    "SELECT count(*) FROM problem_test_cases t JOIN problems p ON p.id = t.problem_id"
+                            + " WHERE p.slug = ? AND t.is_hidden = false", Integer.class, slug);
+
+            mockMvc.perform(get("/api/v1/problems/{slug}", slug))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(org.hamcrest.Matchers.not(
+                            org.hamcrest.Matchers.containsString("hidden"))));
+            mockMvc.perform(get("/api/v1/problems/{slug}/test-cases", slug))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(visible)));
+
+            assertThat(total).as("total cases for %s", slug).isGreaterThan(visible);
+        }
+    }
+
+    @Test
+    @DisplayName("Bean Validation rejects out of range pagination and unknown sort fields")
+    void validatesQueryParameters() throws Exception {
+        mockMvc.perform(get("/api/v1/problems").param("size", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)));
+        mockMvc.perform(get("/api/v1/problems").param("size", "1000"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/problems").param("page", "-1"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/problems").param("sort", "nonsense"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("nonsense")));
+        mockMvc.perform(get("/api/v1/problems").param("pattern", "Not A Slug"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

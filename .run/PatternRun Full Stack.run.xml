@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="PatternRun Full Stack" type="CompoundRunConfigurationType">
+    <toRun name="PatternRun API" type="SpringBootApplication" />
+    <toRun name="PatternRun Web" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>

@@ -6,9 +6,13 @@ import com.patternrun.problem.dto.HintResponse;
 import com.patternrun.problem.dto.ProblemDetailResponse;
 import com.patternrun.problem.dto.ProblemSummaryResponse;
 import com.patternrun.problem.dto.TestCaseResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import java.util.List;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/problems")
+@Validated
 public class ProblemController {
 
     private final ProblemService problemService;
@@ -27,10 +32,13 @@ public class ProblemController {
 
     @GetMapping
     public PageResponse<ProblemSummaryResponse> findAll(
-            @RequestParam(required = false) String pattern,
+            @RequestParam(required = false) @Pattern(regexp = "[a-z0-9-]+") String pattern,
             @RequestParam(required = false) Difficulty difficulty,
-            @PageableDefault(size = 20, sort = "externalId") Pageable pageable) {
-        return PageResponse.from(problemService.findPage(pattern, difficulty, pageable));
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(defaultValue = "externalId") @Pattern(regexp = "[a-zA-Z]+") String sort) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(sort));
+        return PageResponse.from(problemService.findPage(pattern, difficulty, pageRequest));
     }
 
     @GetMapping("/{slug}")

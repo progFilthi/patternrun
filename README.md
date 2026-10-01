@@ -546,6 +546,30 @@ This gives O(n) time and O(n) space."
 
 The app can score structure without pretending to be an interviewer.
 
+## Reading the explanation
+
+Before asking for anything back, present the explanation as an argument in that order.
+
+``` text
+the invariant      the one claim everything else follows from
+the pseudocode      the code that keeps that claim true
+why it works       the correctness argument
+what it beats      the alternative that was rejected, and its cost
+mistakes           what breaks this specific solution
+```
+
+Give the invariant the largest type on the page.
+
+It is the sentence a learner has to be able to defend, and it is the only part that generalises
+to the next problem in the pattern. A specific solution explained next to a generic one buries
+it.
+
+Show the three beats to answer out loud.
+
+The pattern, mechanism and complexity above are the same three beats as the prompt. Render them as
+a checklist the learner can recite before submitting, so the requirement is visible while reading
+rather than only once it is asked for.
+
 ------------------------------------------------------------------------
 
 # 13. Stage 9 --- Speedrun
@@ -4021,6 +4045,55 @@ The reference cheat sheet has 15 sections because it is a poster.
 
 The app should have a much smaller navigation model.
 
+## Top level
+
+Three items until Review and Progress exist.
+
+Mark the current route with `aria-current` plus a visible indicator. Never with colour alone.
+
+Keep the current route marked on nested routes too. `/patterns/sliding-window` is still
+Patterns.
+
+## Inside a session
+
+The seven phases are a stepper, not a progress bar. Every phase the learner has already reached
+is a link back to it.
+
+``` text
+Read ← Identify ← Animate ← Hint ← Explain ← Complexity ← Finish
+```
+
+Make going back free and free of side effects.
+
+Re-reading the invariant after finishing, or replaying an animation to check a prediction, must
+not cost hints, answers, or progress. Navigation is a view concern and never mutates session
+state.
+
+Never let the stepper skip ahead.
+
+Let a learner revisit anything they have earned, and nothing they have not. The gate stays
+one-directional: the only route forward is the phase's own Continue button, which stays disabled
+until its gate is satisfied. If a learner could jump to Explain without identifying the pattern,
+the recall being trained in Scout and Decode never happens.
+
+Track the furthest phase reached, and treat it as the reachable set. Because the Continue button
+is the only way forward and it enforces the gate, "reached" and "earned" are the same thing.
+
+Keep the way back on screen.
+
+The stepper sticks below the header so it is reachable at any scroll depth, and scrolls
+horizontally on narrow screens.
+
+## Orientation
+
+Show a breadcrumb wherever the route is more than one level deep.
+
+``` text
+Problems > Sliding Window > Minimum Window Substring
+```
+
+Answer "which pattern is this, and how do I get back to it" without relying on browser history.
+
 ------------------------------------------------------------------------
 
 # 108. Mobile
@@ -4051,6 +4124,22 @@ Code
 ```
 
 Do not try to make Monaco comfortable on a tiny screen.
+
+## Narrow screen navigation
+
+Let a wide control scroll inside itself. Never let it widen the page.
+
+A row that is too wide must become its own scroll container, so it costs a swipe inside that
+element instead of a sideways-scrolling document.
+
+Put the scroll container on the element that also draws the border or background. A nested
+scroll container does not clip the document's scrollable overflow, so an inner element that
+scrolls correctly can still put a horizontal scrollbar on the whole page.
+
+Drop the brand wordmark below the navigation, not the other way round.
+
+The nav labels are the navigation. Below the smallest breakpoint the logo reduces to its mark so
+three destinations plus the theme switch still fit.
 
 ------------------------------------------------------------------------
 
@@ -4233,6 +4322,41 @@ Avoid hardcoding colors throughout components.
 
 Use semantic colors.
 
+## One token set, two themes
+
+Ship light and dark from the same variables. A `.dark` block swaps the surface ladder
+(`background` → `card` → `popover`), inverts `primary`, and lightens the semantic colors so they
+stay legible on a dark background.
+
+``` css
+:root { --background: oklch(1 0 0); /* ... */ }
+.dark { --background: oklch(0.18 0 0); /* ... */ }
+```
+
+Components reference tokens only. A component that hardcodes or overrides a color per theme is a
+bug, because it cannot follow the palette when either side of it changes.
+
+The same hue on a dark background needs more lightness to hold contrast. Darkening the semantic
+colors along with the surface makes them unreadable.
+
+Set `color-scheme` per theme so form controls, scrollbars and the canvas match.
+
+## No flash, no hydration mismatch
+
+The server can know neither `localStorage` nor the OS preference, so it cannot render the right
+theme. Reading it from React flashes the wrong theme; not reading it desynchronises the markup.
+
+Resolve the theme in a blocking inline script in the root layout, which sets the class on
+`<html>` before first paint, and mark that element `suppressHydrationWarning`.
+
+Let the toggle's icon and label follow from CSS, not React state. Swapping them with the `dark:`
+variant keeps the server markup and the first client render identical, so hydration cannot
+mismatch no matter what is stored.
+
+Follow `prefers-color-scheme` until the user chooses otherwise, keep following it if the OS
+setting changes later, and sync the choice across tabs. Store the explicit choice under a
+versioned key.
+
 ------------------------------------------------------------------------
 
 # 116. UI Rules
@@ -4279,6 +4403,31 @@ Prefer generous whitespace.
 ```
 
 Do not randomly mix values.
+
+## Hierarchy
+
+Make every route read at the same visual weight.
+
+Share the page masthead, the section band and the eyebrow label across routes. A page that
+invents its own spacing reads as a different product from the one before it.
+
+Three levels are enough, and they should be visibly distinct:
+
+``` text
+page    mono eyebrow, large title, muted lede
+section small semibold heading over a hairline
+block   quiet uppercase label above grouped detail
+```
+
+Order content as an argument, not as a list of fields.
+
+When several pieces of content are all true but none is more important, they will read as
+vague. Give the one that everything else depends on the visual weight, and make the dependency
+explicit.
+
+Give a claim the largest type on the page, then the evidence for it, then the alternative that
+was rejected, then the mistakes. A learner should be able to say the essential part out loud
+after reading.
 
 ------------------------------------------------------------------------
 
@@ -4672,7 +4821,13 @@ It should not pretend to predict hiring outcomes.
 
 # 131. Deployment Plan --- Tonight
 
-## Phase 0 --- 20 minutes
+Build order for a single evening, in time-boxed steps.
+
+These steps are not release phases. They are how one person gets from an empty directory to a
+running app in about five hours, and several of them land inside the same release phase. Release
+phases are tracked in section 154.
+
+## Step 0 --- 20 minutes
 
 Create:
 
@@ -4687,7 +4842,7 @@ Initialize Git.
 
 ------------------------------------------------------------------------
 
-## Phase 1 --- 60 minutes
+## Step 1 --- 60 minutes
 
 Spring Boot:
 
@@ -4711,7 +4866,7 @@ AnimationStep
 
 ------------------------------------------------------------------------
 
-## Phase 2 --- 60 minutes
+## Step 2 --- 60 minutes
 
 Create:
 
@@ -4730,7 +4885,7 @@ Do not wait for all 40+ problems.
 
 ------------------------------------------------------------------------
 
-## Phase 3 --- 90 minutes
+## Step 3 --- 90 minutes
 
 Next.js:
 
@@ -4754,7 +4909,7 @@ XP
 
 ------------------------------------------------------------------------
 
-## Phase 4 --- 60 minutes
+## Step 4 --- 60 minutes
 
 Add:
 
@@ -4770,7 +4925,7 @@ Do not build server-side code execution.
 
 ------------------------------------------------------------------------
 
-## Phase 5 --- 30 minutes
+## Step 5 --- 30 minutes
 
 Polish:
 
@@ -4785,7 +4940,7 @@ animation speed
 
 ------------------------------------------------------------------------
 
-## Phase 6 --- 30--45 minutes
+## Step 6 --- 30--45 minutes
 
 Deploy:
 
@@ -5585,3 +5740,88 @@ Longest Substring Without Repeating Characters
 ```
 
 **Ship the loop first. Expand the world second.**
+
+------------------------------------------------------------------------
+
+# 154. Build Status
+
+Where the repository actually is, measured against section 143 rather than against intent.
+
+## Phase numbering
+
+One meaning, decided:
+
+``` text
+Phase 1   API and content domain
+Phase 2   frontend training slice
+Phase 3   game layer
+```
+
+"Phase" means a release stage and nothing else. Section 131 previously used the same word for the
+time-boxed steps of a one-evening build, which is why the two schemes disagreed; those headings are
+now Steps, and several of them land inside a single release phase.
+
+This is the sense the code already assumed. `Phase 1` appears in the API types, the content schema
+and the seeder; `Phase 2` in the API client and `docs/frontend.md`; `Phase 3` wherever the game
+layer is deferred to. No code comment had to change.
+
+## Phase 1 --- API and content
+
+Done. Spring Boot over PostgreSQL, Flyway migrations, ten patterns and twenty problems seeded
+from JSON under `backend/src/main/resources/seed`. Read-only endpoints under `/api/v1`, no
+server-side session state. `./mvnw verify` runs 37 tests green: service units plus
+Testcontainers integration tests over the API and the seed.
+
+## Phase 2 --- Frontend training slice
+
+Accepted as complete.
+
+The playable loop: dashboard, pattern picker, problem library, and one complete training session
+for any seeded problem.
+
+Shipped:
+
+``` text
+✓ training loop      Scout -> Identify -> Animate -> Hint -> Explain -> Complexity -> Finish
+✓ animation engine   data-driven registry, one renderer per step type, predict-the-move gating
+✓ progressive hints  one rung per request, count tracked as hint dependency
+✓ local progress     completion records in localStorage, no accounts, no server writes
+✓ light and dark     one token set, both themes, no flash and no hydration mismatch
+✓ navigation         clickable phase stepper, breadcrumbs, active route marked in the header
+✓ responsive         verified at 375, 768 and 1280 with no horizontal overflow
+✓ states             loading, empty, not found, and a friendly API-asleep error
+```
+
+Verified before closing: `npx tsc --noEmit`, `npm run lint` and `npm run build` all pass, and the
+running app was walked in a real browser across every route, both themes and three viewports with
+no console errors.
+
+### Carried into Phase 3
+
+Two section 143 items are knowingly unmet. They do not affect the shipped behaviour, so the phase
+is closed with them recorded rather than left open:
+
+``` text
+○ frontend tests   no runner, no test files
+○ deployment       no config, nothing runs outside localhost
+```
+
+The frontend has three checks, all passing, and none of them catch a behavioural regression: a
+type checker does not notice a stepper that stops navigating, and a build does not notice a colour
+that fails contrast in dark mode. The backend has 37 passing tests and the frontend has none,
+which is the asymmetry worth closing.
+
+First target is `SessionProgress`. Its reachable set is derived state whose failure mode is
+silent: a locked phase that looks locked but cannot be reached, or a reachable phase that quietly
+stops being clickable. Neither shows up in a build.
+
+Deployment is a prerequisite for the free hosting tier, not for local work, so it can land any
+time before that matters.
+
+## Phase 3 --- Game layer
+
+Not started. XP, levels, streaks, pattern mastery, the mistake journal, the review queue,
+speedrun mode, and the code editor with any execution at all. Everything in section 118 beyond
+the reading order, and every "Not built yet" item in `docs/frontend.md`.
+
+The first two items of work are the carried-over `○` entries above, then the loop itself.

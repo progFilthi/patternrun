@@ -8,7 +8,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
  */
 public final class PostgresTestContainer {
 
-    public static final PostgreSQLContainer<?> INSTANCE = new PostgreSQLContainer<>("postgres:17-alpine");
+    public static final PostgreSQLContainer<?> INSTANCE = new PostgreSQLContainer<>("postgres:18-alpine");
 
     static {
         INSTANCE.start();

@@ -1,15 +1,16 @@
 services:
   postgres:
-    image: postgres:17
+    image: postgres:18-alpine
     container_name: patternrun-postgres
     environment:
       POSTGRES_DB: patternrun
       POSTGRES_USER: patternrun
       POSTGRES_PASSWORD: patternrun
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # PostgreSQL 18 puts PGDATA in a versioned subdirectory; mount the parent.
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U patternrun -d patternrun"]
       interval: 5s

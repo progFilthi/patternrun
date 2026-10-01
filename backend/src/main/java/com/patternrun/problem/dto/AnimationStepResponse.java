@@ -1,6 +1,6 @@
 package com.patternrun.problem.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.patternrun.problem.AnimationStepType;
 
 /** One frame of the animation engine: type + payload + text alternative. */
