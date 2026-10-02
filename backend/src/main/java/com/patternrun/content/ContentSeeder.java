@@ -105,8 +105,9 @@ public class ContentSeeder implements ApplicationRunner {
                         INSERT INTO problems (external_id, slug, title, difficulty, training_difficulty, statement,
                                               constraints, why_this_pattern, brute_force, invariant, pseudocode,
                                               common_mistakes, interview_explanation, time_complexity,
-                                              space_complexity, primary_pattern_id, breakdown)
-                        VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?, ?::jsonb)
+                                              space_complexity, primary_pattern_id, breakdown, entrypoint,
+                                              argument_mode)
+                        VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?, ?::jsonb, ?, ?)
                         RETURNING id
                         """,
                 UUID.class,
@@ -126,7 +127,9 @@ public class ContentSeeder implements ApplicationRunner {
                 problem.timeComplexity(),
                 problem.spaceComplexity(),
                 patternIds.get(problem.primaryPattern()),
-                json(toBreakdownPrompts(problem.breakdown())));
+                json(toBreakdownPrompts(problem.breakdown())),
+                problem.entrypoint(),
+                problem.argumentModeOrPlain().name());
 
         insertSecondaryPatterns(patternIds, problem, problemId);
         insertExamples(problem, problemId);
@@ -177,8 +180,12 @@ public class ContentSeeder implements ApplicationRunner {
 
     private void insertHints(ProblemSeed problem, UUID problemId) {
         for (ProblemSeed.HintSeed hint : problem.hints()) {
-            jdbcTemplate.update("INSERT INTO problem_hints (problem_id, level, content) VALUES (?, ?, ?)",
-                    problemId, hint.level(), hint.content());
+            jdbcTemplate.update("""
+                            INSERT INTO problem_hints (problem_id, level, stage, trigger, content)
+                            VALUES (?, ?, ?, ?, ?)
+                            """,
+                    problemId, hint.level(), hint.stageOrAny().name(), hint.triggerOrAny().name(),
+                    hint.content());
         }
     }
 
@@ -194,16 +201,25 @@ public class ContentSeeder implements ApplicationRunner {
         }
     }
 
+    /**
+     * Writes the display columns and, when the case is runnable, the machine-readable ones.
+     *
+     * Both forms are stored rather than derived. The display string is what the learner is shown
+     * and has always been authoritative for that; the JSONB pair is what a runner calls. Keeping
+     * them side by side means adding an editor changed no part of how content reads.
+     */
     private void insertTestCases(ProblemSeed problem, UUID problemId) {
         int ordinal = 1;
         for (ProblemSeed.TestCaseSeed testCase : problem.testCases()) {
             jdbcTemplate.update("""
                             INSERT INTO problem_test_cases
-                            (problem_id, ordinal, label, input_data, expected_output, is_hidden)
-                            VALUES (?, ?, ?, ?, ?, ?)
+                            (problem_id, ordinal, label, input_data, expected_output, is_hidden, call, expected_json)
+                            VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb)
                             """,
                     problemId, ordinal++, testCase.label(), testCase.input(), testCase.expectedOutput(),
-                    testCase.hidden());
+                    testCase.hidden(),
+                    testCase.call() == null ? null : testCase.call().toString(),
+                    testCase.expected() == null ? null : testCase.expected().toString());
         }
     }
 

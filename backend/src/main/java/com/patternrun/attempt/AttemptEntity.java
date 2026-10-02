@@ -117,6 +117,40 @@ public class AttemptEntity {
     private Long durationMs;
 
     /**
+     * How the coding stage ended, as one of the execution outcomes.
+     *
+     * Written only by {@code CodeExecutionService.submit}, after the code has actually been run
+     * against the evaluation set. Null until then, which means "not evaluated" rather than "failed".
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "code_outcome")
+    private com.patternrun.execution.ExecutionOutcome codeOutcome;
+
+    /**
+     * Whether the backend ran this code against the hidden evaluation set and it passed.
+     *
+     * The only thing in this entity that means "the learner solved it by writing code". There is
+     * exactly one writer, and it is a method that has just run the code, so no client-supplied
+     * value can reach this column.
+     */
+    @Column(name = "code_accepted", nullable = false)
+    private boolean codeAccepted;
+
+    /** How many times the learner ran or submitted code in this session. */
+    @Column(name = "code_executions", nullable = false)
+    private int codeExecutions;
+
+    /**
+     * Whether the reference solution was revealed.
+     *
+     * Tracked apart from {@code hintsUsed} because it means something categorically different. A
+     * rung is a nudge; the reference implementation is the answer, and mastery and review need to
+     * be able to tell independent solving from assisted solving.
+     */
+    @Column(name = "solution_revealed", nullable = false)
+    private boolean solutionRevealed;
+
+    /**
      * What this single attempt paid out. Denormalised so one attempt's result reads without
      * joining the ledger; the learner's total is a sum over {@code user_xp_awards}, never this
      * column, so nothing has to be kept in step.
@@ -133,6 +167,18 @@ public class AttemptEntity {
 
     public boolean isCompleted() {
         return status == AttemptStatus.COMPLETED;
+    }
+
+    /**
+     * Whether the learner worked this out unaided.
+     *
+     * Requires the code to have been accepted <em>and</em> no rung and no reference solution to
+     * have been revealed. Deliberately strict: the question is not whether they eventually got it,
+     * it is whether they could have got it without being shown. Anything looser makes the flag
+     * meaningless, and it is the one that separates independent solving from assisted solving.
+     */
+    public boolean isSolvedIndependently() {
+        return codeAccepted && hintsUsed == 0 && !solutionRevealed;
     }
 
     /** A prediction counts as correct only when every question was answered and all were right. */

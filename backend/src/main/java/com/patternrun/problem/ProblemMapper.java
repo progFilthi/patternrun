@@ -9,6 +9,7 @@ import com.patternrun.problem.dto.AnimationStepResponse;
 import com.patternrun.problem.dto.ComplexityResponse;
 import com.patternrun.problem.dto.ExampleResponse;
 import com.patternrun.problem.dto.HintResponse;
+import com.patternrun.problem.dto.HintSelection;
 import com.patternrun.problem.dto.ProblemDetailResponse;
 import com.patternrun.problem.dto.ProblemSummaryResponse;
 import com.patternrun.problem.dto.TestCaseResponse;
@@ -69,11 +70,20 @@ public final class ProblemMapper {
                 List.copyOf(entity.getCommonMistakes()),
                 hintCount,
                 animationStepCount,
-                visibleTestCaseCount);
+                visibleTestCaseCount,
+                entity.isRunnable() ? entity.getEntrypoint() : null);
     }
 
     public static HintResponse toHint(ProblemHintEntity entity) {
         return new HintResponse(entity.getLevel(), entity.getContent());
+    }
+
+    public static HintSelection toHintSelection(ProblemHintEntity entity) {
+        return new HintSelection(
+                entity.getLevel(),
+                entity.getContent(),
+                entity.getStage().name(),
+                entity.getTrigger().name());
     }
 
     public static AnimationStepResponse toAnimationStep(AnimationStepEntity entity) {

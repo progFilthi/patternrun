@@ -94,6 +94,37 @@ public class ProblemEntity {
     @Column(name = "space_complexity", nullable = false)
     private String spaceComplexity;
 
+    /**
+     * The function a runner calls, e.g. {@code two_sum}.
+     *
+     * Lives here rather than in the client on purpose. If the browser chose which function to
+     * call it would also choose the argument shape, and "my code passed" would become a claim
+     * about a call the learner defined. Null means the problem is not runnable yet, which is the
+     * state for the nineteen problems that have display cases but no structured arguments.
+     */
+    @Column(name = "entrypoint")
+    private String entrypoint;
+
+    /**
+     * How the runner turns stored arguments into a call.
+     *
+     * {@code PLAIN} for the eighteen problems that need nothing, {@code TREE} for the two whose
+     * arguments are a level-order array rather than the object the entrypoint expects.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "argument_mode", nullable = false)
+    private ArgumentMode argumentMode = ArgumentMode.PLAIN;
+
+    /**
+     * Whether the coding stage is available for this problem.
+     *
+     * Derived rather than stored, because it is a function of the entrypoint and the two could not
+     * be allowed to disagree.
+     */
+    public boolean isRunnable() {
+        return entrypoint != null && !entrypoint.isBlank();
+    }
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "primary_pattern_id", nullable = false)
     private PatternEntity primaryPattern;

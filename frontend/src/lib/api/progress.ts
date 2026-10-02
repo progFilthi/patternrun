@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 
-import type { ProgressSummary, ProblemProgress } from "@/types/api"
+import type { ProblemProgress, ProgressSummary, ReviewItem } from "@/types/api"
 
 /**
  * Server-side reads of the learner's progress.
@@ -41,9 +41,24 @@ async function read<T>(path: string): Promise<T | null> {
   }
 }
 
-/** Everything the dashboard needs, or null when it cannot be read. */
+/**
+ * Everything a progress screen needs, in one call.
+ *
+ * The backend serves this as one endpoint rather than six so the screen paints once instead of
+ * assembling itself from partial data.
+ */
 export function getProgressSummary(): Promise<ProgressSummary | null> {
   return read<ProgressSummary>("/progress")
+}
+
+/**
+ * The mistakes that are actually due. Read-only: reviewing is a separate, explicit act.
+ *
+ * An empty list when the API cannot be reached, because a queue that fails to load should read as
+ * "nothing due" rather than as an error on a page that is otherwise fine.
+ */
+export function getReviewQueue(): Promise<ReviewItem[]> {
+  return read<ReviewItem[]>("/progress/review").then((items) => items ?? [])
 }
 
 /** Per-problem state for the library list. */

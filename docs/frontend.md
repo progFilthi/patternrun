@@ -44,6 +44,10 @@ Next.js 16 (App Router, React 19, Turbopack), TypeScript strict, Tailwind v4, sh
 primitives, Inter plus Geist Mono. No state library, no animation library: the training loop is
 a small state machine in one component and motion is CSS only.
 
+CodeMirror 6 for the code editor, loaded behind `next/dynamic` with `ssr: false` because it touches
+`document` on mount. Monaco was the alternative and would have been roughly 3-5MB for intellisense
+this product does not want: the hint, the diagnosis and the explanation are the teaching surface.
+
 ## Running
 
 ``` bash
@@ -51,11 +55,22 @@ a small state machine in one component and motion is CSS only.
 docker compose up -d postgres
 cd backend && ./mvnw spring-boot:run
 
-# 2. frontend
+# 2. the code executor image, once. Only needed for Run and Submit.
+docker build -t patternrun-executor:py3 backend/executor
+
+# ...and the API must be started with the runner enabled, which is off by default
+PATTERN_RUNNER_ENABLED=true ./mvnw spring-boot:run
+
+# 3. frontend
 cd frontend
 npm install
 npm run dev            # http://localhost:3000
 ```
+
+Without `PATTERN_RUNNER_ENABLED=true` the API starts fine and the editor reports that the runner is
+unavailable. That is the intended behaviour and not a misconfiguration to route around: there is
+deliberately no in-process fallback, because "the sandbox is missing, so let us just run it here"
+is the one behaviour this must never have.
 
 | Variable | Used by | Default |
 | --- | --- | --- |
@@ -87,8 +102,13 @@ serve stale or missing pages, and the free hosting tier can wake up per request.
 `TrainingSession` (client) is the state machine. Phases are one at a time, no skipping:
 
 ``` text
-SCOUT -> PATTERN_GUESS -> ANIMATION -> HINTS -> EXPLANATION -> COMPLEXITY -> COMPLETE
+SCOUT -> PATTERN_GUESS -> ANIMATION -> HINTS -> EXPLANATION -> COMPLEXITY -> CODE -> COMPLETE
 ```
+
+`CODE` was inserted between `COMPLEXITY` and `COMPLETE`. Complexity is the last thing reasoned
+about before writing, so the editor follows it directly. Its continue button used to say "Finish
+the session" and it did; it now says "Write it", because a button that promises to finish the
+session while opening a blank editor is a small lie.
 
 Rules that make it a training loop rather than a page:
 
@@ -256,8 +276,37 @@ Rules that make the switch work without a flash:
   `prefers-color-scheme`, keeps following it if the OS setting changes, and syncs across tabs.
 - `color-scheme` is set per theme so form controls, scrollbars and the canvas match.
 
+## The editor
+
+``` text
+components/editor/code-editor.tsx          dynamic, ssr: false, theme from the document
+components/editor/code-editor-surface.tsx  CodeMirror, loaded only where an editor renders
+```
+
+The public component takes `language`, `value`, `onChange` and `label`. It knows about syntax,
+theming and Tab, and nothing about problems, attempts, running or scoring --- which is what lets the
+same component serve the learner's solution, the revealed reference and a future Java editor without
+any of them growing a special case. `EditorLanguage` already includes `plaintext`, so a language
+without a grammar still renders a usable editor.
+
+Two details worth knowing. Tab indents rather than leaving the field, and the editor stops the
+animation stage's arrow-key paging from firing while someone is typing inside a string literal
+--- otherwise typing an arrow in Python scrolls the walkthrough.
+
 ## Not built yet
 
-XP, levels, streaks, mastery, mistake journal, review queue, speedrun mode, the code editor and
-any server-side execution, accounts, and server persisted attempts. All of that belongs to the
-next phases; the loop above is the thing that has to work first.
+The mistake journal and speedrun mode exist on the backend and have no UI. Code failures are not yet
+written into the mistake journal, though `user_code_executions` holds everything such an entry
+would need. Only Two Sum has an editor; the other nineteen have no structured test arguments, so
+`runnableEntrypoint` is absent and the page says so rather than offering an editor that cannot work.
+
+## What the coding screen must not become
+
+The editor communicates correctness, progress, mistakes and improvement. It does not pay out. No XP
+counter in the panel, no level-up, no confetti, no arcade treatment. A passing Run is labelled as a
+pass on the *visible examples only* and followed by an instruction to submit, because a learner who
+cannot tell those apart will stop before the thing that actually decides.
+
+The one place the code result is mentioned again afterwards is a single quiet line on the completion
+screen. The rewards above it are the celebration; adding a second one is the arcade UI this product
+is not.

@@ -69,25 +69,61 @@
       "label": "Example 2",
       "input": "n = 5",
       "expectedOutput": "8",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        5
+      ],
+      "expected": 8
     },
     {
       "label": "Single step",
       "input": "n = 1",
       "expectedOutput": "1",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        1
+      ],
+      "expected": 1
     },
     {
       "label": "Large n",
       "input": "n = 45",
       "expectedOutput": "1836311903",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        45
+      ],
+      "expected": 1836311903
+    },
+    {
+      "label": "Two steps",
+      "input": "n = 2",
+      "expectedOutput": "2",
+      "hidden": true,
+      "call": [
+        2
+      ],
+      "expected": 2
+    },
+    {
+      "label": "No steps",
+      "input": "n = 0",
+      "expectedOutput": "1",
+      "hidden": true,
+      "call": [
+        0
+      ],
+      "expected": 1
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int climbStairs(int n) {\n        int previous = 1;\n        int current = 1;\n        for (int step = 2; step <= n; step++) {\n            int next = previous + current;\n            previous = current;\n            current = next;\n        }\n        return current;\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def climb_stairs(n):\n    ways, current = 1, 2\n    for _ in range(max(n - 1, 0)):\n        ways, current = current, ways + current\n    return 1 if n <= 1 else ways\n"
     }
   ],
   "animationSteps": [
@@ -234,5 +270,7 @@
       "answerIndex": 0,
       "explanation": "Landing on n means arriving from n-1 or from n-2, and nothing else, so the count at n is the sum of those two counts. That recurrence is the whole problem."
     }
-  ]
+  ],
+  "entrypoint": "climb_stairs",
+  "argumentMode": "PLAIN"
 }

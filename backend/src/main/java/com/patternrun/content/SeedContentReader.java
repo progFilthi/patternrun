@@ -5,6 +5,10 @@ import com.patternrun.content.seed.PatternSeed;
 import com.patternrun.content.seed.ProblemSeed;
 import com.patternrun.content.seed.SeedContent;
 import com.patternrun.problem.AnimationStepType;
+import com.patternrun.problem.ArgumentMode;
+import com.patternrun.problem.HintStage;
+import com.patternrun.problem.HintTrigger;
+import com.patternrun.problem.ProgrammingLanguage;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import java.io.IOException;
@@ -94,6 +98,7 @@ public class SeedContentReader {
             validatePatternReferences(content, problem);
             validateHintLadder(problem);
             validateTestCasesAndSolution(problem);
+            validateRunnableContent(problem);
             validateAnimationSteps(problem);
             validateBreakdown(problem);
         }
@@ -148,18 +153,75 @@ public class SeedContentReader {
         }
     }
 
+    /**
+     * The pre-coding ladder has to be complete.
+     *
+     * Scoped to reasoning rungs on purpose. Phase 4 added per-stage and per-trigger rungs, and a
+     * completeness check across all of them would demand five debugging hints from every problem,
+     * which is neither authored nor wanted. The five generic rungs stay mandatory, so every problem
+     * remains teachable without an editor.
+     */
     private void validateHintLadder(ProblemSeed problem) {
-        Set<Integer> levels = new HashSet<>();
+        Set<Integer> reasoningLevels = new HashSet<>();
         for (ProblemSeed.HintSeed hint : problem.hints()) {
-            if (!levels.add(hint.level())) {
+            if (hint.isReasoningRung()) {
+                if (!reasoningLevels.add(hint.level())) {
+                    throw new SeedContentException(
+                            "Duplicate reasoning hint level " + hint.level() + " in " + problem.slug());
+                }
+                continue;
+            }
+            // A staged rung is meaningless without a stage to be staged for. Triggered but
+            // unstaged content would silently never match, because selection always asks for a
+            // concrete stage.
+            if (hint.stageOrAny() == HintStage.ANY && hint.triggerOrAny() != HintTrigger.ANY) {
                 throw new SeedContentException(
-                        "Duplicate hint level " + hint.level() + " in " + problem.slug());
+                        "Hint " + hint.level() + " in " + problem.slug()
+                                + " needs a stage when it is given a trigger");
             }
         }
         for (int level = 1; level <= ProblemSeed.HINT_LEVELS; level++) {
-            if (!levels.contains(level)) {
+            if (!reasoningLevels.contains(level)) {
                 throw new SeedContentException("Missing hint level " + level + " in " + problem.slug());
             }
+        }
+    }
+
+    /**
+     * A runnable problem has to be runnable all the way through.
+     *
+     * Half-configured content is the dangerous case. An entrypoint with no structured arguments
+     * would offer an editor and then fail every submission as a wrong answer, and a runnable case
+     * with no entrypoint would never be called. Both would teach the learner something false
+     * about their own code, so they fail startup instead.
+     */
+    private void validateRunnableContent(ProblemSeed problem) {
+        boolean hasEntrypoint = problem.entrypoint() != null;
+        long runnableCases = problem.testCases().stream().filter(ProblemSeed.TestCaseSeed::isRunnable).count();
+
+        if (hasEntrypoint && runnableCases == 0) {
+            throw new SeedContentException(
+                    "Problem " + problem.slug() + " declares an entrypoint but no runnable test case");
+        }
+        if (!hasEntrypoint && runnableCases > 0) {
+            throw new SeedContentException(
+                    "Problem " + problem.slug() + " has runnable test cases but no entrypoint");
+        }
+        if (!hasEntrypoint) {
+            return;
+        }
+        for (ProblemSeed.TestCaseSeed testCase : problem.testCases()) {
+            if (testCase.isRunnable() && !testCase.call().isArray()) {
+                throw new SeedContentException(
+                        "Test case " + testCase.label() + " in " + problem.slug()
+                                + " needs `call` to be a JSON array of arguments");
+            }
+        }
+        boolean hasPython = problem.solutions().stream()
+                .anyMatch(solution -> solution.language() == ProgrammingLanguage.PYTHON);
+        if (!hasPython) {
+            throw new SeedContentException(
+                    "Problem " + problem.slug() + " is runnable and needs a PYTHON reference solution");
         }
     }
 

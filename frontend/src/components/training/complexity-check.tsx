@@ -3,6 +3,7 @@
 import type { Complexity } from "@/types/api"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { normalize } from "@/lib/training/complexity"
 
 /** COMPLEXITY: the learner commits before the official answer is shown (README section 11). */
 export function ComplexityCheck({
@@ -71,7 +72,11 @@ export function ComplexityCheck({
 
       <div className="flex justify-end border-t pt-6">
         {checked ? (
-          <Button onClick={onContinue}>Finish the session</Button>
+          /* Phase 4 changed where this goes, so the label follows. It used to say "Finish the
+             session" and it did: complexity was the last thing before the rewards. Now it leads to
+             the editor, and a button that promises to finish the session while opening a blank
+             editor is the kind of small lie that makes an interface feel unreliable. */
+          <Button onClick={onContinue}>Write it</Button>
         ) : (
           <Button onClick={onCheck} disabled={!timeChoice || !spaceChoice}>
             Check my complexity
@@ -105,7 +110,7 @@ function ChoiceGroup({
       <div role="radiogroup" aria-label={legend} className="flex flex-wrap gap-2">
         {options.map((option) => {
           const selected = value === option
-          const isExpected = option.replace("²", "^2") === expected
+          const isExpected = normalize(option) === normalize(expected)
           return (
             <button
               key={option}

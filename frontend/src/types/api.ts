@@ -106,6 +106,13 @@ export interface ProblemDetail {
   hintCount: number
   animationStepCount: number
   visibleTestCaseCount: number
+  /**
+   * The function the backend will call, or absent when this problem is not available for coding.
+   *
+   * Its absence is what stops the editor being offered for a problem whose tests cannot be run, so
+   * the client never shows a control that is guaranteed to fail.
+   */
+  runnableEntrypoint?: string
 }
 
 export interface Hint {
@@ -225,6 +232,16 @@ export interface CompletionResult {
   patternMastery?: number
   personalBest: boolean
   mistakesResolved: string[]
+  /**
+   * Phase 4. Absent means no code has been evaluated, which is not the same as "failed".
+   *
+   * These three are reported, not scored. Gating the grade on an accepted solution is a product
+   * decision that should be made with the evidence visible, and Phase 3's awards are unchanged
+   * while that is being decided.
+   */
+  codeOutcome?: ExecutionOutcome
+  codeAccepted: boolean
+  solvedIndependently: boolean
 }
 
 export interface PatternMastery {
@@ -277,6 +294,148 @@ export interface ProblemProgress {
   timesCompleted: number
 }
 
+/*
+ * Phase 4: the coding stage.
+ *
+ * Everything here describes what the backend did after running the learner's code. The browser sent
+ * a string and nothing else, so there is no field in this file the client could have set to make
+ * itself pass.
+ */
+
+/**
+ * How a run ended.
+ *
+ * The distinction between WRONG_ANSWER and RUNTIME_ERROR is the one that matters most and is
+ * worth the enum's length: one says the idea did not hold, the other says the code never got far
+ * enough to have an idea. A single "failed" would send someone looking for a logic bug in a
+ * solution that has a typo.
+ */
+export type ExecutionOutcome =
+  | "ACCEPTED"
+  | "WRONG_ANSWER"
+  | "RUNTIME_ERROR"
+  | "TIME_LIMIT_EXCEEDED"
+  | "MEMORY_LIMIT_EXCEEDED"
+  | "SYNTAX_ERROR"
+  | "INTERNAL_ERROR"
+
+/**
+ * Whether this was a check or an evaluation.
+ *
+ * Run is the learner testing against examples they were already shown; Submit is the backend's
+ * hidden evaluation set. Only Submit can ever produce ACCEPTED.
+ */
+export type ExecutionKind = "RUN" | "SUBMIT"
+
+/**
+ * One case's result.
+ *
+ * A hidden case carries `passed` and nothing else — no label, input, expected value or output. The
+ * keys are absent rather than null because the API omits nulls, so `actual: undefined` is a normal
+ * shape here and not a missing response.
+ */
+export interface ExecutionCaseResult {
+  ordinal: number
+  label?: string
+  input?: string
+  expected?: string
+  actual?: string
+  passed: boolean
+  hidden: boolean
+}
+
+/** A failure, already phrased for display. `line` is in the learner's own file. */
+export interface ExecutionError {
+  type: string
+  line?: number
+  message: string
+}
+
+export interface ExecutionResult {
+  problemSlug: string
+  kind: ExecutionKind
+  outcome: ExecutionOutcome
+  casesTotal: number
+  casesPassed: number
+  durationMs?: number
+  cases: ExecutionCaseResult[]
+  error?: ExecutionError
+}
+
+/** The saved source plus the last thing the server concluded about it. Survives a refresh. */
+export interface AttemptCodeState {
+  language?: string
+  code?: string
+  outcome?: ExecutionOutcome
+  accepted: boolean
+  hintsUsed: number
+}
+
+/** One rung, chosen for the moment the learner is in. */
+export type HintStage = "BREAKDOWN" | "REASONING" | "CODING" | "ANY"
+
+export type HintTrigger =
+  | "ANY"
+  | "WRONG_ANSWER"
+  | "RUNTIME_ERROR"
+  | "SYNTAX_ERROR"
+  | "TIME_LIMIT_EXCEEDED"
+
+export interface HintSelection {
+  level: number
+  content: string
+  stage: HintStage
+  trigger: HintTrigger
+}
+
+/** One mistake that is actually due for review. */
+export interface ReviewItem {
+  mistakeId: string
+  problemSlug: string
+  problemTitle: string
+  category: MistakeCategory
+  description: string
+  lesson: string
+  reviewCount: number
+  intervalDays: number
+  dueAt: string
+  attemptsSince: number
+}
+
+export type MistakeCategory = "PATTERN" | "LOGIC" | "TESTS" | "COMPLEXITY" | "EXPLANATION"
+
+/**
+ * The learner's judgement about a mistake they are reviewing.
+ *
+ * One boolean, and it is the only field. It decides the review interval and nothing else: XP, the
+ * review count and the next due date are server-owned, and there is nowhere in this shape for a
+ * client to put them.
+ */
+export interface ReviewRequest {
+  correct: boolean
+}
+
+/** What reviewing one mistake did. Interval and next due date are the server's answer. */
+export interface ReviewOutcome {
+  mistakeId: string
+  problemSlug: string
+  category: MistakeCategory
+  correct: boolean
+  reviewCount: number
+  intervalDays: number
+  nextDueAt: string
+  xpAwarded: number
+  /** True when this review earned nothing because it had already been paid for. */
+  alreadyEarned: boolean
+}
+
+/** The reference implementation. The last escape hatch, and it is always recorded as taken. */
+export interface RevealedSolution {
+  problemSlug: string
+  language: string
+  code: string
+  hintsUsed: number
+}
 /** Phase 3 breakdown: reading the problem before choosing a tool. */
 export interface BreakdownPrompt {
   key: string

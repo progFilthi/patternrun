@@ -30,6 +30,23 @@ spring:
 patternrun:
   seed:
     enabled: ${PATTERN_SEED_ENABLED:true}
+  execution:
+    # Off by default, and that default is the security model. Running a learner's code needs a
+    # runtime that is genuinely isolated from this process; without one configured, the honest
+    # answer is that Run is unavailable. There is deliberately no in-process fallback: "the
+    # sandbox is missing so let us just run it here" is the one behaviour this must never have.
+    #
+    # To turn it on: `docker compose --profile executor up -d executor` then run the API with
+    # PATTERN_RUNNER_ENABLED=true. See backend/executor/README.md.
+    enabled: ${PATTERN_RUNNER_ENABLED:false}
+    docker:
+      image: ${PATTERN_RUNNER_IMAGE:patternrun-executor:py3}
+      total-timeout: 2s
+      wall-clock-timeout: 20s
+      memory: 256m
+      cpus: "0.5"
+      pids: 32
+      max-concurrent: 4
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
     # The web app proxies /api/v1 through its own origin, so from the browser's point of view

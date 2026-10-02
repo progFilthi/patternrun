@@ -73,25 +73,100 @@
       "label": "Example 1",
       "input": "nums = [1,1,1,2,2,3], k = 2",
       "expectedOutput": "[1,2]",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          1,
+          1,
+          1,
+          2,
+          2,
+          3
+        ],
+        2
+      ],
+      "expected": [
+        1,
+        2
+      ]
     },
     {
       "label": "Single element",
       "input": "nums = [1], k = 1",
       "expectedOutput": "[1]",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          1
+        ],
+        1
+      ],
+      "expected": [
+        1
+      ]
     },
     {
-      "label": "Ties",
+      "label": "Every element tied",
       "input": "nums = [4,4,5,5,6], k = 1",
       "expectedOutput": "[4]",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        [
+          4,
+          4,
+          5,
+          5,
+          6
+        ],
+        1
+      ],
+      "expected": [
+        4
+      ]
+    },
+    {
+      "label": "k takes everything",
+      "input": "nums = [1,2], k = 2",
+      "expectedOutput": "[1,2]",
+      "hidden": true,
+      "call": [
+        [
+          1,
+          2
+        ],
+        2
+      ],
+      "expected": [
+        1,
+        2
+      ]
+    },
+    {
+      "label": "One value only",
+      "input": "nums = [7,7,7], k = 1",
+      "expectedOutput": "[7]",
+      "hidden": true,
+      "call": [
+        [
+          7,
+          7,
+          7
+        ],
+        1
+      ],
+      "expected": [
+        7
+      ]
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int[] topKFrequent(int[] nums, int k) {\n        Map<Integer, Integer> counts = new HashMap<>();\n        for (int num : nums) {\n            counts.merge(num, 1, Integer::sum);\n        }\n        PriorityQueue<Map.Entry<Integer, Integer>> heap =\n                new PriorityQueue<>(Map.Entry.comparingByValue());\n        for (Map.Entry<Integer, Integer> entry : counts.entrySet()) {\n            heap.add(entry);\n            if (heap.size() > k) {\n                heap.poll();\n            }\n        }\n        int[] result = new int[heap.size()];\n        for (int i = 0; i < result.length; i++) {\n            result[i] = heap.poll().getKey();\n        }\n        return result;\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def top_k_frequent(nums, k):\n    frequencies = Counter(nums)\n    # Ties are broken toward the smaller value so the answer is deterministic. A problem whose\n    # answer is not unique cannot be graded: a learner who returns [5] instead of [4] has written\n    # something just as correct and would be told they were wrong.\n    ordered = sorted(frequencies, key=lambda value: (-frequencies[value], value))\n    return ordered[:k]\n"
     }
   ],
   "animationSteps": [
@@ -201,39 +276,6 @@
       }
     }
   ],
-  "breakdown": [
-    {
-      "key": "given",
-      "prompt": "What are you handed?",
-      "options": [
-        "An array and a value k",
-        "An array of numbers and how many distinct values you want",
-        "A map already built from the array"
-      ],
-      "answerIndex": 1,
-      "explanation": "The raw array plus a count k. Nothing has been counted yet, and k limits how many distinct values come back."
-    },
-    {
-      "key": "asked",
-      "prompt": "What must you hand back?",
-      "options": [
-        "The k most frequent values, in any order",
-        "The k values that appear first in the array",
-        "The values that appear more than once"
-      ],
-      "answerIndex": 0,
-      "explanation": "Ranked by how often they occur, and order does not matter. So the value itself is the answer, not its position."
-    },
-    {
-      "key": "shape",
-      "prompt": "What does frequency depend on?",
-      "options": [
-        "The value, counted across the whole array",
-        "Where the value sits in the array",
-        "How large the value is"
-      ],
-      "answerIndex": 0,
-      "explanation": "Frequency is a property of the value alone, so it can be tallied in one pass. Ranking by that tally is a separate, smaller step on a much smaller set."
-    }
-  ]
+  "entrypoint": "top_k_frequent",
+  "argumentMode": "PLAIN"
 }

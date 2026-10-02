@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
   { href: "/patterns", label: "Patterns" },
   { href: "/problems", label: "Problems" },
+  { href: "/progress", label: "Progress" },
 ] as const
 
 export function AppHeader() {

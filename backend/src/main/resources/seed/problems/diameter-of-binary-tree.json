@@ -14,8 +14,8 @@
   "examples": [
     {
       "input": "root = [1, 2, 3, 4, 5, null, 7]",
-      "output": "3",
-      "explanation": "The longest path is 4 to 2 to 1 to 3, which uses three edges."
+      "output": "4",
+      "explanation": "The longest path is 5 to 2 to 1 to 3 to 7, which uses four edges."
     }
   ],
   "hints": [
@@ -65,26 +65,85 @@
     {
       "label": "Example 1",
       "input": "root = [1,2,3,4,5,null,7]",
-      "expectedOutput": "3",
-      "hidden": false
+      "expectedOutput": "4",
+      "hidden": false,
+      "call": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          null,
+          7
+        ]
+      ],
+      "expected": 4
     },
     {
       "label": "Single node",
       "input": "root = [1]",
       "expectedOutput": "0",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          1
+        ]
+      ],
+      "expected": 0
     },
     {
       "label": "Balanced tree",
       "input": "root = [1,2,3,4,5,6,7]",
       "expectedOutput": "4",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      ],
+      "expected": 4
+    },
+    {
+      "label": "Right spine",
+      "input": "root = [1,2,null,3]",
+      "expectedOutput": "2",
+      "hidden": true,
+      "call": [
+        [
+          1,
+          2,
+          null,
+          3
+        ]
+      ],
+      "expected": 2
+    },
+    {
+      "label": "Empty tree",
+      "input": "root = []",
+      "expectedOutput": "0",
+      "hidden": true,
+      "call": [
+        []
+      ],
+      "expected": 0
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    private int best = 0;\n\n    public int diameterOfBinaryTree(TreeNode root) {\n        best = 0;\n        height(root);\n        return best;\n    }\n\n    private int height(TreeNode node) {\n        if (node == null) return 0;\n        int left = height(node.left);\n        int right = height(node.right);\n        best = Math.max(best, left + right);\n        return 1 + Math.max(left, right);\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def diameter_of_binary_tree(root):\n    best = 0\n\n    def depth(node):\n        nonlocal best\n        if node is None:\n            return 0\n        left, right = depth(node.left), depth(node.right)\n        best = max(best, left + right)\n        return 1 + max(left, right)\n\n    depth(root)\n    return best\n"
     }
   ],
   "animationSteps": [
@@ -220,5 +279,7 @@
       "answerIndex": 1,
       "explanation": "Every path has a highest node on it, and from there it runs down one branch and up another. So for each node, the best path through it is the deepest path down its left plus the deepest path down its right."
     }
-  ]
+  ],
+  "entrypoint": "diameter_of_binary_tree",
+  "argumentMode": "TREE"
 }

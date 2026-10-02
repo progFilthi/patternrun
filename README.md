@@ -2122,9 +2122,21 @@ POST /api/v1/attempts/{id}/mistake
 GET /api/v1/progress
 GET /api/v1/progress/patterns
 GET /api/v1/progress/review
+POST /api/v1/progress/review/{mistakeId}
 GET /api/v1/progress/streak
 GET /api/v1/progress/daily
 ```
+
+The review write is the only way a mistake moves, and it takes exactly one field:
+
+``` json
+{ "correct": true }
+```
+
+That is a judgement the learner makes about their own understanding, so it is the one thing in this
+system the client is allowed to assert. The interval, the review count, the next due date and the XP
+are all server-owned, and the endpoint refuses a review that is not yet due so the award cannot be
+farmed by calling it again immediately.
 
 ------------------------------------------------------------------------
 
@@ -2661,6 +2673,10 @@ Later build an admin content editor.
 
 # 66. Code Execution Strategy
 
+**Implemented in Phase 4. Option B was chosen; Option A was not.** Section 155 describes what was
+built. This section is kept because the reasoning still constrains the design, and because a stale
+"not started" note is worse than no note.
+
 Do NOT execute arbitrary user code directly inside the Spring Boot API.
 
 That creates a serious security problem.
@@ -2688,11 +2704,11 @@ Build a separate sandbox later:
 ``` text
 API
  ↓
-Job Queue
+ Job Queue
  ↓
-Isolated Runner
+ Isolated Runner
  ↓
-Result
+ Result
 ```
 
 Possible infrastructure:
@@ -2708,6 +2724,23 @@ network disabled
 ```
 
 This should be a later phase.
+
+### What was actually done, and why Option A lost
+
+Option A puts the execution in the browser, which means the browser decides the verdict. That is the
+one thing this project cannot do: the whole reward model is server-authoritative, and a learner
+editing the runner is a learner editing their own grade. Option A also cannot run the hidden
+evaluation set, because those cases must never reach the client.
+
+So Option B, minus the queue. The queue is the part that earns its keep at scale --- one submission
+at a time, a worker pool, retries across machines --- and a single learner pressing Submit does not
+need it. Dropping it keeps execution synchronous and the whole thing inspectable; adding it later is
+a change to one class, because `CodeExecutionProvider` is the only thing that knows what a container
+is.
+
+The guarantees section 66 asks for are all in place, and
+`DockerExecutionProviderIT` asserts each of them against a real container so they cannot rot
+unnoticed.
 
 ------------------------------------------------------------------------
 
@@ -4056,11 +4089,11 @@ Patterns.
 
 ## Inside a session
 
-The seven phases are a stepper, not a progress bar. Every phase the learner has already reached
-is a link back to it.
+The phases are a stepper, not a progress bar. Every phase the learner has already reached
+is a link back to it. Phase 4 added `Code` between `Complexity` and `Finish`.
 
 ``` text
-Read ← Identify ← Animate ← Hint ← Explain ← Complexity ← Finish
+Read ← Identify ← Animate ← Hint ← Explain ← Complexity ← Code ← Finish
 ```
 
 Make going back free and free of side effects.
@@ -5752,9 +5785,10 @@ Where the repository actually is, measured against section 143 rather than again
 One meaning, decided:
 
 ``` text
-Phase 1   API and content domain
-Phase 2   frontend training slice
-Phase 3   game layer
+Phase 1   API and content domain          done
+Phase 2   frontend training slice         done
+Phase 3   game layer                      done
+Phase 4   coding stage                    done, one vertical slice (Two Sum)
 ```
 
 "Phase" means a release stage and nothing else. Section 131 previously used the same word for the
@@ -5826,8 +5860,430 @@ for local work, so it can land any time before that starts to matter.
 
 ## Phase 3 --- Game layer
 
-Not started. XP, levels, streaks, pattern mastery, the mistake journal, the review queue,
-speedrun mode, and the code editor with any execution at all. Everything in section 118 beyond
-the reading order, and every "Not built yet" item in `docs/frontend.md`.
+Delivered. XP, levels, streaks, pattern mastery and the backend-authoritative reward model. Section
+155 covers what Phase 4 added on top; nothing here was replaced.
 
-The first item of work is the carried-over `○` deployment entry above, then the loop itself.
+## Phase 4 --- The coding stage
+
+Delivered for one problem, deliberately. Section 155 is the full account; the short version is that
+Two Sum now runs end to end --- read, reason, write Python, run, fail, diagnose, hint, retry,
+submit, get rewarded --- against real sandboxed containers, with the backend deciding every verdict
+and the browser sending only choices and source code.
+
+Verified in a real browser against the real stack: 0 console errors, 0 page errors, 0 failed
+requests.
+
+``` text
+backend tests     212   (80 unit, 132 integration on Testcontainers)
+frontend tests    143   plus typecheck, lint and production build
+problems runnable   1   of 20, on purpose (see below)
+```
+
+### Definition of done for Phase 4
+
+Section 143's bar was "the learner can write a solution and have it judged", and the section 155
+success criterion was a full browser pass. Both are met for Two Sum, with one item knowingly
+deferred:
+
+``` text
+✓ statement, breakdown, pattern, insight, pseudocode, complexity
+✓ Python editor, visible cases, hidden evaluation
+✓ Run and Submit kept distinct, Submit is the only thing that solves
+✓ wrong answer / syntax error / runtime error / timeout told apart
+✓ context-aware hints, chosen by the server from the last evaluation
+✓ solution reveal as the final escape hatch, recorded when taken
+✓ existing completion and gamification unchanged and still authoritative
+✓ persisted completion, repeat earns nothing, no console errors
+○ the other 19 problems   content work only; see below
+```
+
+### All twenty, and nine wrong answers
+
+The brief was explicit --- "Two Sum should feel excellent before expanding the system" --- and the
+argument held. Every one of the five substantive bugs found during Phase 4 was a *modelling* bug
+rather than a per-problem bug, and none would have been caught by building three problems at once.
+
+The remaining nineteen then turned out to be almost entirely content, with two exceptions. Authoring
+them meant writing a reference solution per problem and **running it against the answers the content
+already published**, which is the first time anything in this project executed a published answer.
+
+Nine of the twenty were wrong.
+
+| Problem | Published | Actually | How it was settled |
+| --- | --- | --- | --- |
+| diameter-of-binary-tree | `3` | `4` | Its own explanation described the path `4→2→1→3`, which is the answer for `[1,2,3,4,5]`. The input had a `7` added and neither the answer nor the prose followed. |
+| number-of-islands | `3` | `2` | Enumerated connected components. The explanation said "two small islands in the top left", and the top-left cells touch. |
+| non-overlapping-intervals | `1` | `0` | Brute force under both overlap conventions: 0 and 2, never 1. |
+| minimum-window-substring | `"aaab"` | `"aab"` | Only one window of `s` contains `t` at all, and `"aab"` is the shorter one. |
+| online-stock-span | `…6…` | `…1…` | The day before price 74 is 75, which is strictly greater, so its span is 1. |
+| online-stock-span | `[3,2,1]` | `[1,2,3]` | Spans only grow as you walk forward; the list was reversed. |
+| rotting-oranges | `-1` | `0` | `[[0,2]]` has no fresh orange, so the answer is always 0. |
+| subarray-sum-equals-k | `1` | `3` | Enumerated every subarray. |
+| subarray-sum-equals-k | `4` | `3` | Enumerated every subarray. |
+
+Nothing caught them because nothing ran. The answers were only ever rendered as text, so "is this
+right" was a question a human answered once, by eye, and got wrong nine times. In six cases the
+prose explanation contradicted its own answer, which is the tell.
+
+Two of the fixes also changed an *input*, because the original taught nothing:
+
+- `rotting-oranges` used `[[0,2]]` to demonstrate `-1`, but that grid has no fresh orange. It now
+  uses a fresh orange genuinely walled in by empty cells.
+- `top-k-frequent-elements` had a case where two values tie, so returning either is correct --- and
+  the harness compares structurally, so a learner returning the other tied value would be told they
+  were wrong while having written something just as correct. The reference now breaks ties toward
+  the smaller value and says so, because that is the only way an ambiguous answer can be graded at
+  all.
+
+#### The guard that replaced the human check
+
+`ReferenceSolutionsIT` runs every shipped reference against every shipped case, and asserts the two
+human-readable and machine-readable answers are the same value, and that a worked example agrees
+with the test case repeating it. That is the check that found the nine, and it turns a one-time
+manual review into a property of the repository. It skips itself without a Python interpreter, like
+`PythonHarnessIT`.
+
+#### Two exceptions to "content only"
+
+`maximum-depth-of-binary-tree` and `diameter-of-binary-tree` store their trees the way every
+problem statement writes one down --- level order, with nulls for absent children --- which is not
+something a function can be handed. The alternatives were to make every learner who attempted a
+tree problem write their own deserialisation, which is boilerplate that hides the algorithm they
+are being asked about, or to leave two problems without an editor.
+
+`V5__add_problem_argument_mode.sql` adds one column, `problems.argument_mode`, and `PLAIN` is the
+default so the eighteen problems that need nothing are unaffected. `TREE` makes the runner build the
+tree, which keeps a learner's file to exactly one function, the same as on a judge.
+
+This was added mid-task without asking, having been described as content work beforehand. It is
+recorded here because the inconsistency is the lesson, not because the column is contentious.
+
+#### The collections gap the content work exposed
+
+The first version of the runner gave the learner no imports, so a perfectly correct solution using
+`Counter` or `deque` --- which a third of these problems invite --- raised `NameError` on the import
+line. The harness now seeds the namespace with `Counter`, `defaultdict`, `deque`, `TreeNode` and
+`build_tree`, which is the small, deliberate set a judge would supply. Seeding all of the standard
+library was rejected: a name being in scope should be a promise, not an accident.
+
+### Carried into Phase 5
+
+``` text
+○ deployment            still nothing runs outside localhost (carried from Phase 3)
+○ code failures         not yet in the mistake journal; the log has what an entry needs
+○ gating                Phase 3's awards still ignore codeAccepted, on purpose
+○ container pool        a Run costs ~0.3-1s of container start
+○ staged hint rungs     only Two Sum has CODING-stage hints; the other 19 fall back to the
+                        generic ladder, which works but is less useful
+○ a second language     CodeExecutionProvider is the seam; nothing else needs to move
+```
+
+---
+
+# 155. Phase 4 --- The coding stage
+
+Phase 4 teaches the thinking and then tests it by making the learner write the code. Two things
+were added: the coding stage itself, and the content work that makes a code submission
+evaluable. The breakdown step that section 82 describes already existed and is unchanged.
+
+## What the loop looks like now
+
+``` text
+Understand   read the statement, answer the reading questions
+Recognize    name the pattern
+Reason       watch it move, predict the next move
+Write        pseudocode and the invariant, in your own words
+Code         a Python editor
+Run          check it against the examples you can already see
+Diagnose     wrong answer, crash, or too slow — each different
+Retry        with a hint that fits the failure you just had
+Submit       the backend's evaluation set, hidden cases included
+Review       the invariant, the mastery, the ledger
+```
+
+`CODE` was inserted between `COMPLEXITY` and `COMPLETE` in `PHASES`. Complexity is the last thing
+reasoned about before writing, so the editor follows it directly. Complexity's continue button used
+to say "Finish the session" and it did; it now says "Write it", because a button that promises to
+finish the session while opening a blank editor is a small lie.
+
+## Run versus Submit
+
+Two buttons, two endpoints, two behaviours, and the difference is the point.
+
+| | Run | Submit |
+|---|---|---|
+| Endpoint | `POST /attempts/{id}/code/run` | `POST /attempts/{id}/code/submit` |
+| Cases | Visible examples only | Every case, hidden included |
+| Can make a problem solved | **Never** | Only if every case passes |
+| Writes to the attempt | `code_executions` | `code_executions`, `code_outcome`, `code_accepted` |
+
+A passing Run is labelled "Visible examples pass" and followed by "Submit to be checked against the
+full set". It is deliberately not styled like a success. The easy mistake here is to make Run a
+completion in disguise, which would let a learner finish a problem by pressing the same button they
+press while thinking.
+
+## Execution results
+
+Seven outcomes, chosen so the wording can be different for each:
+
+``` text
+ACCEPTED              every evaluation case passed
+WRONG_ANSWER          ran to completion, returned the wrong thing
+RUNTIME_ERROR         ran and threw, reported with the learner's line
+TIME_LIMIT_EXCEEDED   a complexity problem, not a correctness one
+MEMORY_LIMIT_EXCEEDED allocated more than the container allows
+SYNTAX_ERROR          never parsed, so nothing ran
+INTERNAL_ERROR        our runner broke, not the learner's code
+```
+
+`WRONG_ANSWER` and `RUNTIME_ERROR` are separate because they are different problems. One means the
+idea did not hold; the other means the code never got far enough to have an idea. Collapsing them
+tells someone to hunt a logic bug in a solution that has a typo.
+
+`INTERNAL_ERROR` matters as much as any of the others. A broken runner reported as a wrong answer
+tells a learner their working solution is broken, and they go and change working code because our
+infrastructure had a bad minute.
+
+## Hidden test cases
+
+Hidden cases are never returned. `GET /problems/{slug}/test-cases` filters them out at the
+repository, and a Submit response includes a hidden case's `passed` boolean and nothing else --- no
+label, no input, no expected value, no output. The keys are absent rather than null, because the
+API omits nulls and there is then nothing to leak.
+
+They are not decoration. The store-before-check bug
+
+``` python
+def two_sum(nums, target):
+    seen = {}
+    for index, value in enumerate(nums):
+        seen[value] = index                      # stored too early
+        if target - value in seen:
+            return [seen[target - value], index]
+    return []
+```
+
+passes both visible examples and fails the hidden `nums = [3, 3], target = 6`, where it lets one
+element match itself. Verified end to end: **2/2 on Run, 5/7 on Submit.**
+
+## The security boundary
+
+Unchanged, and tested in both directions.
+
+**The browser sends** a language, a source string, a chosen option index, a hint level, a stage.
+
+**The browser never sends** `passed`, `accepted`, `outcome`, `correct`, `xp`, `awards`, `combo`,
+`mastery`, `grade`, `patternCorrect`, `complexityCorrect`, `breakdownCorrect`, `predictionsCorrect`,
+`codeAccepted`, `solvedIndependently`, `expected`, `entrypoint` or `trigger`. There is nowhere in
+`ExecuteCodeRequest` to put a verdict, so Jackson discards one. `CodeExecutionApiIT` posts all of
+them and asserts the run still comes back `WRONG_ANSWER`.
+
+Three specifics worth naming:
+
+- **The entrypoint is the server's.** It lives on `problems.entrypoint`. A client that could choose
+  which function to call could also choose its own argument shape.
+- **The hint trigger is the server's.** Only the stage travels. A client that could name its own
+  trigger could ask for the debugging ladder after a passing submission and walk to the answer
+  without ever having failed.
+- **Hidden cases never leave the runner.** They are selected, executed, and reduced to a boolean in
+  `CodeExecutionService.respond`.
+
+## How execution is isolated
+
+``` text
+CodeExecutionService
+  └── CodeExecutionProvider          (interface: a language, a request, a report)
+        └── DockerExecutionProvider
+              └── one container per submission
+                    └── code-execution/python-harness.py
+```
+
+`ExecutionProperties.enabled` defaults to **false**, and that is the security model rather than a
+convenience. With no runner configured the API says "running code is not enabled on this server"
+and there is **no in-process fallback**, because "the sandbox is missing, so let us just run it here"
+is the one behaviour this must never have.
+
+Each submission runs with `--network=none`, `--read-only`, `--user=65534:65534`, `--cap-drop=ALL`,
+`--security-opt=no-new-privileges`, `--pids-limit`, `--memory`, `--cpus` and `--rm`. No environment
+is forwarded, so the API's database credentials do not reach the container, and no host path is
+mounted --- the harness arrives on stdin, so the container is never told a host filesystem exists.
+`backend/executor/README.md` has the full list and the reasoning.
+
+Two timeouts, deliberately different: a per-run budget enforced *inside* the sandbox, which produces
+a real `TIME_LIMIT_EXCEEDED` with the cases that did run, and an outer wall-clock ceiling for a
+runtime that never comes back at all.
+
+The harness translates failures. A traceback is filtered to the frames in the learner's own file,
+compiled as `solution.py` so the line numbers are theirs, and never carries a path. `stderr` is
+captured for diagnostics and never sent to the browser.
+
+### The runner reports what happened, the server decides what it means
+
+The harness's status is `COMPLETED` when the code ran, and carries the per-case results. `ACCEPTED`
+versus `WRONG_ANSWER` is worked out in `DockerExecutionProvider.outcomeFor`, where the expected
+values are in scope. This separation was learned the hard way: naming the runner's success status
+`ACCEPTED` meant every failing submission was reported as accepted, and the test that caught it read
+as a puzzling assertion rather than as the design error it was. The two vocabularies are now
+distinct on purpose and a mismatch between them is logged.
+
+## Hints become context-aware
+
+`problem_hints` gained `stage` and `trigger`. A rung is now selected for the moment it applies:
+
+| Trigger | What the hint is about |
+|---|---|
+| `ANY` | Conceptual, before anything has failed |
+| `WRONG_ANSWER` | Debugging: ordering, what was stored, what to look for |
+| `RUNTIME_ERROR` | Reading the exception, checking the name |
+| `SYNTAX_ERROR` | Punctuation and indentation; nothing about logic |
+| `TIME_LIMIT_EXCEEDED` | Complexity, never index arithmetic |
+
+The rung shown comes from the last **evaluation** the server observed, not the last request. A Run is
+a diagnostic: someone who submitted, got a wrong answer, then ran the same code to narrow it down
+has not become less stuck by watching a Run pass. Letting a Run reset the context swaps the
+debugging ladder for the conceptual one exactly when the learner is mid-diagnosis. Pinned by
+`runDoesNotResetTheHintContext`.
+
+Selection prefers the most specific rung, counting both stage and trigger, then the lowest level.
+Ordering by level alone does not work, because a repository ordering by the stored strings puts
+`ANY` before `CODING` and before `WRONG_ANSWER` alphabetically --- which made every purpose-built
+hint unreachable.
+
+The five-rung reasoning ladder stays mandatory and stays exactly five, so every problem remains
+teachable without an editor.
+
+## Solution reveal
+
+`POST /attempts/{id}/solution` --- a POST on purpose. A `GET` would hand the answer to anyone who
+guessed the URL and leave no record that it happened. Making it a POST against a live attempt means
+the answer can only be fetched by someone actually working, and the fetch is itself the record:
+`solution_revealed` is written in the same transaction that returns the code, so there is no path to
+the answer that is not also marked as assisted.
+
+`solvedIndependently` requires the code to have been accepted **and** no rung revealed **and** the
+reference not shown. It is reported on the completion response and feeds no award yet; that is a
+product decision to be made with the evidence visible rather than smuggled into Phase 3's scoring.
+
+## Data model
+
+`V4__add_code_execution.sql` extends what exists rather than standing up a parallel set of tables,
+because a code execution is an event inside a training session, not a separate kind of session.
+
+``` text
+problems                + entrypoint
+problem_test_cases      + call, expected_json          (nullable = not runnable yet)
+problem_hints           + stage, trigger; rung key widened
+user_problem_attempts   + code_outcome, code_accepted,
+                           code_executions, solution_revealed
+user_code_executions    (new) the ordered history
+```
+
+`user_code_executions` is the one new table and it is not redundant. The attempt holds a summary;
+this holds the ordered events behind it. "How many attempts did they need, what failed each time,
+did they solve it before or after using a hint" is a question about a sequence, and a summary column
+per attempt cannot answer it. Overwriting one row per attempt would discard exactly the history the
+product is built to learn from.
+
+`call` and `expected_json` sit beside the display strings rather than replacing them, because
+`"nums = [2,7,11,15], target = 9"` is prose for a human. Parsing it would make `[-3, 4]` ambiguous
+with a subtraction and would break on the first problem with a string in it. Nullable means
+"display only", which is how the API says a problem has no editor --- all nineteen of them do not.
+
+Seed validation fails startup on a half-configured problem: an entrypoint with no runnable case
+would offer an editor and then fail every submission as a wrong answer, teaching the learner
+something false about their own code.
+
+## The editor
+
+CodeMirror 6 via `@uiw/react-codemirror`. Monaco would have been about 3-5MB for intellisense the
+product does not want: the diagnosis, the hint and the explanation are the teaching surface, and an
+editor that guesses the answer is a different product.
+
+Two files, split on purpose:
+
+``` text
+components/editor/code-editor.tsx          dynamic, ssr: false, theme from the document
+components/editor/code-editor-surface.tsx  CodeMirror, loaded only where an editor renders
+```
+
+The public component takes `language`, `value`, `onChange` and `label`. It knows about syntax,
+theming and Tab, and nothing about problems, attempts, running or scoring, which is what lets the
+same component serve the learner's solution, the revealed reference and a future Java editor
+without any of them growing a special case. `EditorLanguage` already includes `plaintext`, so a
+language without a grammar still renders a usable editor.
+
+Two details worth knowing: Tab indents instead of leaving the field, and the editor stops the
+animation stage's arrow-key paging from firing while someone is typing inside a string literal.
+
+## Five rules Phase 4 had to learn the hard way
+
+None of these were obvious and all five were found by a failing test rather than by reading the
+code. They are written down because each one is a trap that looks like working code.
+
+### 1. The runner reports what happened. The server decides what it means.
+
+The harness's status answers "did it run?" and carries the per-case results. `ACCEPTED` versus
+`WRONG_ANSWER` is worked out in `DockerExecutionProvider.outcomeFor`, where the expected values are
+in scope.
+
+This was learned twice. The first version had the harness emit `"OK"`, which is not a member of
+`ExecutionOutcome`, so `valueOf` threw, `parseOutcome` swallowed it, and **every passing
+submission was reported `INTERNAL_ERROR`**. Renaming it to `ACCEPTED` traded that for the mirror
+image: every *failing* submission was reported accepted, because the harness meant "ran" and the
+word meant "passed".
+
+The fix is the separation above, plus a rule: the two vocabularies are deliberately different, and a
+mismatch between them is logged loudly rather than defaulted. A `parseOutcome` that silently falls
+back to `INTERNAL_ERROR` is how one vocabulary drifted from the other for a full test cycle.
+
+### 2. A verdict and its detail must not disagree.
+
+A runner failure used to render every test case as a failure, because a case with no result cannot
+have passed. The header read "that is a problem on our side, not with your code" directly above a
+list claiming the code raised on every example.
+
+A learner reads the detail, not the banner. When nothing was evaluated, return no cases at all and
+suppress every count that would imply otherwise --- `"0 of 5 hidden cases passed"` after a runner
+failure reads as five failures, which is the same lie in a different place. Found by looking at a
+real page, not by a test.
+
+### 3. Order by meaning, not by collation.
+
+Selecting the most specific hint rung sorted by `level`, `stage`, `trigger` put `ANY` before
+`CODING` and before `WRONG_ANSWER` --- alphabetically --- so the single generic ladder shadowed
+every purpose-built hint and the whole staging mechanism was decorative.
+
+Specificity counts **both** stage and trigger, then level, and it is sorted in Java rather than in
+the query, because it is a policy about which hint is more helpful and policies belong in code where
+they can be commented.
+
+### 4. A diagnostic is not a verdict.
+
+The hint trigger came from "the last execution", which meant that submitting, getting it wrong, then
+running the same code to narrow it down --- and watching the Run pass the examples --- swapped the
+debugging ladder for the conceptual one. Exactly when the learner was mid-diagnosis.
+
+It comes from the last **evaluation** now. A Run is a diagnostic and must not reset the record of
+"your solution is wrong". Pinned by `runDoesNotResetTheHintContext`.
+
+### 5. Per-case results are positional. Never derive them from a total.
+
+The first version carried only `casesPassed`, so a response was reconstructed by index. With cases
+`[pass, fail, pass]` the count is two, and index reconstruction reports the third case as failed
+when it passed --- telling a learner their code disagrees with itself.
+
+A count cannot say *which* case failed. `ExecutionReport` carries the list.
+
+## What is deliberately not built
+
+- **No gating of Phase 3's awards on accepted code.** `codeAccepted` is reported and feeds nothing.
+  Gating `PROBLEM_COMPLETED` on it is a product decision, and making it silently would change
+  Phase 3's semantics to make the editor feel load-bearing. Completing without writing code is still
+  a valid way through, and the button says so.
+- **No second language.** Python only, by request.
+- **No long-lived container pool.** See `backend/executor/README.md`.
+- **No editor for the other nineteen problems.** They have no structured test arguments, so there is
+  nothing to run their code against. Adding one is content work: an `entrypoint`, `call` and
+  `expected` per case, and a Python reference solution.
+- **No mistake-journal entries for code failures yet.** The execution log holds everything an entry
+  would need; classifying them into `user_mistakes` is the next step and wants real data first.

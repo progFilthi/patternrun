@@ -69,25 +69,87 @@
       "label": "Example 1",
       "input": "height = [1,8,6,2,5,4,8,3,7]",
       "expectedOutput": "49",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          1,
+          8,
+          6,
+          2,
+          5,
+          4,
+          8,
+          3,
+          7
+        ]
+      ],
+      "expected": 49
     },
     {
       "label": "Two lines",
       "input": "height = [1,1]",
       "expectedOutput": "1",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          1,
+          1
+        ]
+      ],
+      "expected": 1
     },
     {
       "label": "All zero",
       "input": "height = [0,0,0,0]",
       "expectedOutput": "0",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": 0
+    },
+    {
+      "label": "Pyramid",
+      "input": "height = [1,2,4,3,2]",
+      "expectedOutput": "6",
+      "hidden": true,
+      "call": [
+        [
+          1,
+          2,
+          4,
+          3,
+          2
+        ]
+      ],
+      "expected": 6
+    },
+    {
+      "label": "Single line",
+      "input": "height = [7]",
+      "expectedOutput": "0",
+      "hidden": true,
+      "call": [
+        [
+          7
+        ]
+      ],
+      "expected": 0
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int maxArea(int[] height) {\n        int left = 0;\n        int right = height.length - 1;\n        int best = 0;\n        while (left < right) {\n            best = Math.max(best, Math.min(height[left], height[right]) * (right - left));\n            if (height[left] < height[right]) {\n                left++;\n            } else {\n                right--;\n            }\n        }\n        return best;\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def max_area(height):\n    left, right, best = 0, len(height) - 1, 0\n    while left < right:\n        best = max(best, min(height[left], height[right]) * (right - left))\n        if height[left] < height[right]:\n            left += 1\n        else:\n            right -= 1\n    return best\n"
     }
   ],
   "animationSteps": [
@@ -250,5 +312,7 @@
       "answerIndex": 1,
       "explanation": "The shorter one. Moving the taller end keeps the same bottleneck while losing width, so it cannot beat what you already have; moving the shorter end is the only move that can."
     }
-  ]
+  ],
+  "entrypoint": "max_area",
+  "argumentMode": "PLAIN"
 }

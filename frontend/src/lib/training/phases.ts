@@ -1,6 +1,10 @@
 /**
  * The training loop (README section 60). The order is the loop: one phase at a time, and a
  * phase cannot be skipped.
+ *
+ * Phase 4 inserted CODE between COMPLEXITY and COMPLETE. It sits there deliberately: complexity is
+ * the last thing reasoned about before writing, so the editor follows immediately, and everything
+ * that follows the editor is a consequence of what was written rather than another thing to read.
  */
 export const PHASES = [
   { id: "SCOUT", label: "Read" },
@@ -9,6 +13,7 @@ export const PHASES = [
   { id: "HINTS", label: "Hint" },
   { id: "EXPLANATION", label: "Explain" },
   { id: "COMPLEXITY", label: "Complexity" },
+  { id: "CODE", label: "Code" },
   { id: "COMPLETE", label: "Finish" },
 ] as const
 

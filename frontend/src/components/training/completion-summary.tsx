@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { AlertTriangle, Loader2, RotateCcw } from "lucide-react"
+import { AlertTriangle, Check, Loader2, RotateCcw } from "lucide-react"
 
 import type { CompletionResult, ProblemDetail, ProblemSummary } from "@/types/api"
 import { Button } from "@/components/ui/button"
@@ -99,6 +99,23 @@ export function CompletionSummary({
   return (
     <CompletionShell problem={problem}>
       <RewardPanel result={result} />
+
+      {/* One line, no award, no XP. A learner who has just written a passing solution should not
+          arrive at a screen that pretends the last five minutes did not happen. It is stated and
+          not celebrated: the rewards above are the celebration, and adding a second one here would
+          be the arcade UI this product is not. */}
+      {result.codeAccepted ? (
+        <section
+          aria-label="Your code"
+          className="flex items-baseline gap-2 border-t pt-6 text-[15px]"
+        >
+          <Check className="size-4 shrink-0 translate-y-0.5 text-success" aria-hidden />
+          <p className="text-muted-foreground">
+            Your solution passed the full evaluation set
+            {result.solvedIndependently ? ", and you got there without a hint." : "."}
+          </p>
+        </section>
+      ) : null}
 
       <section aria-label="The invariant to remember" className="flex flex-col gap-2 border-t pt-8">
         <h2 className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">

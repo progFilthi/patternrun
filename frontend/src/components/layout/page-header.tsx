@@ -56,12 +56,15 @@ export function Section({
   title,
   meta,
   action,
+  lede,
   className,
   children,
 }: {
   title: string
   meta?: ReactNode
   action?: ReactNode
+  /** One sentence under the title. Explains the section rather than restating it. */
+  lede?: ReactNode
   className?: string
   children: ReactNode
 }) {
@@ -69,10 +72,21 @@ export function Section({
     <section className={className}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b pb-4">
         <h2 className="text-sm font-medium tracking-tight">{title}</h2>
-        {action ??
-          (meta ? <span className="text-xs text-muted-foreground">{meta}</span> : null)}
+        {/* Both, not `action ?? meta`. `??` made `meta` render only when there was no action, so a
+            section passing both silently lost its meta on every page. */}
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          {meta ? <span className="text-xs text-muted-foreground">{meta}</span> : null}
+          {action}
+        </div>
       </div>
-      {children}
+      {lede ? (
+        <>
+          <p className="mt-3 max-w-3xl text-sm text-muted-foreground">{lede}</p>
+          <div className="mt-4">{children}</div>
+        </>
+      ) : (
+        children
+      )}
     </section>
   )
 }

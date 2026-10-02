@@ -72,25 +72,159 @@
       "label": "Example 1",
       "input": "intervals = [[1,3],[2,6],[8,10],[15,18]]",
       "expectedOutput": "[[1,6],[8,10],[15,18]]",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            15,
+            18
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          6
+        ],
+        [
+          8,
+          10
+        ],
+        [
+          15,
+          18
+        ]
+      ]
     },
     {
       "label": "Touching intervals",
       "input": "intervals = [[1,4],[4,5]]",
       "expectedOutput": "[[1,5]]",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          [
+            1,
+            4
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          5
+        ]
+      ]
     },
     {
       "label": "Fully contained",
       "input": "intervals = [[1,10],[2,3],[4,5]]",
       "expectedOutput": "[[1,10]]",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        [
+          [
+            1,
+            10
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          10
+        ]
+      ]
+    },
+    {
+      "label": "Unsorted input",
+      "input": "intervals = [[5,6],[1,2],[3,4]]",
+      "expectedOutput": "[[1,2],[3,4],[5,6]]",
+      "hidden": true,
+      "call": [
+        [
+          [
+            5,
+            6
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          5,
+          6
+        ]
+      ]
+    },
+    {
+      "label": "Single interval",
+      "input": "intervals = [[7,7]]",
+      "expectedOutput": "[[7,7]]",
+      "hidden": true,
+      "call": [
+        [
+          [
+            7,
+            7
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          7,
+          7
+        ]
+      ]
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int[][] merge(int[][] intervals) {\n        Arrays.sort(intervals, Comparator.comparingInt(interval -> interval[0]));\n        List<int[]> merged = new ArrayList<>();\n        for (int[] interval : intervals) {\n            if (merged.isEmpty() || interval[0] > merged.get(merged.size() - 1)[1]) {\n                merged.add(new int[]{interval[0], interval[1]});\n            } else {\n                int[] last = merged.get(merged.size() - 1);\n                last[1] = Math.max(last[1], interval[1]);\n            }\n        }\n        return merged.toArray(new int[0][]);\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def merge(intervals):\n    if not intervals:\n        return []\n    ordered = sorted(intervals, key=lambda pair: pair[0])\n    merged = [list(ordered[0])]\n    for start, end in ordered[1:]:\n        if start <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], end)\n        else:\n            merged.append([start, end])\n    return merged\n"
     }
   ],
   "animationSteps": [
@@ -280,5 +414,7 @@
       "answerIndex": 1,
       "explanation": "Touching counts as overlap, since intervals are continuous. So if the next start is less than or equal to where the current one ends, the two are one interval with the later end."
     }
-  ]
+  ],
+  "entrypoint": "merge",
+  "argumentMode": "PLAIN"
 }

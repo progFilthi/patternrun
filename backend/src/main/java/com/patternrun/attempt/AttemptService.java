@@ -12,6 +12,7 @@ import com.patternrun.attempt.dto.RecordPatternRequest;
 import com.patternrun.attempt.dto.RecordPredictionRequest;
 import com.patternrun.attempt.dto.StartAttemptRequest;
 import com.patternrun.common.ResourceNotFoundException;
+import com.patternrun.mistake.MistakeClassifier;
 import com.patternrun.mistake.MistakeEntity;
 import com.patternrun.mistake.MistakeRepository;
 import com.patternrun.problem.AnimationStepEntity;
@@ -231,7 +232,15 @@ public class AttemptService {
                 correctCount == prompts.size(), recorded.size(), prompts.size(), results);
     }
 
-    /** Stores the learner's code. Never executed on this server (README section 66). */
+    /**
+     * Stores the learner's code without running it.
+     *
+     * Autosave only. The Phase 3 comment here said "never executed on this server", which was true
+     * when the sentence was written and no longer describes the feature as a whole — execution now
+     * exists, on {@code /code/run} and {@code /code/submit}. What is still true, and what this
+     * method now guarantees, is that *this* endpoint decides nothing: no outcome, no correctness,
+     * no execution. Evaluation is a separate request with its own record.
+     */
     @Transactional
     public AttemptResponse recordCode(UserEntity user, UUID attemptId, RecordCodeRequest request) {
         AttemptEntity attempt = requireLive(user, attemptId);
@@ -293,7 +302,11 @@ public class AttemptService {
         attempts.save(attempt);
 
         boolean personalBest = updateSpeedrunBest(user, attempt);
+        // Resolving before recording is deliberate. A fully correct attempt closes what was open and
+        // records nothing new; an imperfect one records what it got wrong. Doing it the other way
+        // round would let a single attempt resolve a mistake and immediately re-open it.
         List<String> resolved = resolveMistakes(user, attempt, awards);
+        recordMistakes(user, attempt);
 
         mastery.recompute(user, attempt.getPattern());
         daily.recordCompletion(user, attempt.getCompletedAt());
@@ -351,7 +364,10 @@ public class AttemptService {
                         .map(BigDecimal::doubleValue)
                         .orElse(null),
                 personalBest,
-                resolved);
+                resolved,
+                attempt.getCodeOutcome() == null ? null : attempt.getCodeOutcome().name(),
+                attempt.isCodeAccepted(),
+                attempt.isSolvedIndependently());
     }
 
     /**
@@ -516,11 +532,7 @@ public class AttemptService {
      */
     private List<String> resolveMistakes(
             UserEntity user, AttemptEntity attempt, List<XpAwardEntity> awards) {
-        boolean fullyCorrect = attempt.isPatternCorrect()
-                && attempt.isComplexityCorrect()
-                && attempt.isBreakdownCorrect()
-                && attempt.predictionsAllCorrect();
-        if (!fullyCorrect) {
+        if (!fullyCorrect(attempt)) {
             return List.of();
         }
 
@@ -535,10 +547,71 @@ public class AttemptService {
                     XpReason.COMEBACK, XpService.Keys.comeback(mistake.getId().toString()));
             if (award != null) {
                 awards.add(award);
-                daily.recordReview(user, Instant.now());
+                daily.recordReview(user, attempt.getCompletedAt());
+                // A comeback is XP, so it belongs in today's total as much as the attempt's own
+                // award below does. Without this the two disagree on the same session.
+                daily.addXp(user, attempt.getCompletedAt(), award.getXp());
             }
         }
         return resolved;
+    }
+
+    /**
+     * Whether the attempt was correct on every reasoning signal the product measures.
+     *
+     * Stated once because two halves of the mistake loop depend on it, and two definitions of
+     * "fully correct" would eventually disagree: this attempt would close the old mistake and also
+     * be judged as having got something wrong.
+     */
+    private static boolean fullyCorrect(AttemptEntity attempt) {
+        return attempt.isPatternCorrect()
+                && attempt.isComplexityCorrect()
+                && attempt.isBreakdownCorrect()
+                && attempt.predictionsAllCorrect();
+    }
+
+    /**
+     * Records what this attempt got wrong, so it can be reviewed later.
+     *
+     * This is the write path the mistake journal was built without. Until it existed the table
+     * could never receive a row, which left the review queue permanently empty, the retention axis of
+     * mastery permanently null, and the comeback award unreachable.
+     *
+     * <p>Only created, never duplicated: a second imperfect attempt on the same problem adds a
+     * fresh entry rather than piling onto the existing one, so the queue reflects distinct things
+     * the learner has got wrong rather than how many times.
+     *
+     * <p>The first attempt on a problem is the one that teaches. Later attempts on an
+     * already-failed problem update the existing entry's lesson instead of adding to the pile,
+     * because a learner retrying the same problem does not need a second copy of the same note.
+     */
+    private void recordMistakes(UserEntity user, AttemptEntity attempt) {
+        if (fullyCorrect(attempt)) {
+            return;
+        }
+        for (MistakeClassifier.Finding finding : MistakeClassifier.inspect(attempt)) {
+            Optional<MistakeEntity> existing = mistakes.findByUserIdAndProblemIdAndCategoryAndResolvedFalse(
+                    user.getId(), attempt.getProblem().getId(), finding.category());
+
+            if (existing.isPresent()) {
+                // A repeat: the learner has still not got it, so the entry stays due and the
+                // lesson is refreshed rather than duplicated.
+                existing.get().setAttemptId(attempt.getId());
+                existing.get().setDescription(finding.description());
+                existing.get().setLesson(finding.lesson());
+                mistakes.save(existing.get());
+                continue;
+            }
+
+            MistakeEntity mistake = new MistakeEntity();
+            mistake.setUser(user);
+            mistake.setProblem(attempt.getProblem());
+            mistake.setAttemptId(attempt.getId());
+            mistake.setCategory(finding.category());
+            mistake.setDescription(finding.description());
+            mistake.setLesson(finding.lesson());
+            mistakes.save(mistake);
+        }
     }
 
     /** The daily quest pays once per day, enforced by its key rather than by a flag. */

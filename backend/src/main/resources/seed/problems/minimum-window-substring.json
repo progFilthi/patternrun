@@ -77,25 +77,66 @@
       "label": "Example 1",
       "input": "s = \"ADOBECODEBANC\", t = \"ABC\"",
       "expectedOutput": "\"BANC\"",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        "ADOBECODEBANC",
+        "ABC"
+      ],
+      "expected": "BANC"
     },
     {
       "label": "Duplicate requirement",
       "input": "s = \"aaab\", t = \"aab\"",
-      "expectedOutput": "\"aaab\"",
-      "hidden": false
+      "expectedOutput": "\"aab\"",
+      "hidden": false,
+      "call": [
+        "aaab",
+        "aab"
+      ],
+      "expected": "aab"
     },
     {
       "label": "No solution",
       "input": "s = \"a\", t = \"aa\"",
       "expectedOutput": "\"\"",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        "a",
+        "aa"
+      ],
+      "expected": ""
+    },
+    {
+      "label": "Single character match",
+      "input": "s = \"a\", t = \"a\"",
+      "expectedOutput": "\"a\"",
+      "hidden": true,
+      "call": [
+        "a",
+        "a"
+      ],
+      "expected": "a"
+    },
+    {
+      "label": "Full string is the window",
+      "input": "s = \"abc\", t = \"cba\"",
+      "expectedOutput": "\"abc\"",
+      "hidden": true,
+      "call": [
+        "abc",
+        "cba"
+      ],
+      "expected": "abc"
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public String minWindow(String s, String t) {\n        if (s.length() < t.length()) return \"\";\n        Map<Character, Integer> need = new HashMap<>();\n        for (char c : t.toCharArray()) need.merge(c, 1, Integer::sum);\n        Map<Character, Integer> formed = new HashMap<>();\n        int missing = t.length();\n        int left = 0, bestStart = 0, bestLength = Integer.MAX_VALUE;\n        for (int right = 0; right < s.length(); right++) {\n            char c = s.charAt(right);\n            if (need.containsKey(c)) {\n                if (formed.merge(c, 1, Integer::sum) <= need.get(c)) missing--;\n            }\n            while (missing == 0) {\n                if (right - left + 1 < bestLength) {\n                    bestLength = right - left + 1;\n                    bestStart = left;\n                }\n                char d = s.charAt(left++);\n                if (need.containsKey(d)) {\n                    if (formed.merge(d, -1, Integer::sum) < need.get(d)) missing++;\n                }\n            }\n        }\n        return bestLength == Integer.MAX_VALUE ? \"\" : s.substring(bestStart, bestStart + bestLength);\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def min_window(s, t):\n    if not s or not t or len(t) > len(s):\n        return \"\"\n    need = Counter(t)\n    window = defaultdict(int)\n    required = len(need)\n    have = 0\n    left = 0\n    best_length, best_start = float(\"inf\"), 0\n    for right, character in enumerate(s):\n        window[character] += 1\n        if window[character] == need[character]:\n            have += 1\n        while have == required:\n            if right - left + 1 < best_length:\n                best_length, best_start = right - left + 1, left\n            leaving = s[left]\n            window[leaving] -= 1\n            if window[leaving] < need[leaving]:\n                have -= 1\n            left += 1\n    return \"\" if best_length == float(\"inf\") else s[best_start:best_start + best_length]\n"
     }
   ],
   "animationSteps": [
@@ -257,5 +298,7 @@
       "answerIndex": 0,
       "explanation": "The window may hold more of a character than t needs, but never fewer. So you track deficits and the window is valid exactly when nothing is missing."
     }
-  ]
+  ],
+  "entrypoint": "min_window",
+  "argumentMode": "PLAIN"
 }

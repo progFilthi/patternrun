@@ -74,25 +74,87 @@
       "label": "Example 1",
       "input": "nums = [1,1,1], k = 2",
       "expectedOutput": "2",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          1,
+          1,
+          1
+        ],
+        2
+      ],
+      "expected": 2
     },
     {
       "label": "Zero prefix",
       "input": "nums = [1, -1, 0], k = 0",
-      "expectedOutput": "1",
-      "hidden": false
+      "expectedOutput": "3",
+      "hidden": false,
+      "call": [
+        [
+          1,
+          -1,
+          0
+        ],
+        0
+      ],
+      "expected": 3
     },
     {
       "label": "Negative numbers",
       "input": "nums = [1, -1, -1, 1], k = 0",
-      "expectedOutput": "4",
-      "hidden": true
+      "expectedOutput": "3",
+      "hidden": true,
+      "call": [
+        [
+          1,
+          -1,
+          -1,
+          1
+        ],
+        0
+      ],
+      "expected": 3
+    },
+    {
+      "label": "Zero k, all zeros",
+      "input": "nums = [0,0,0], k = 0",
+      "expectedOutput": "6",
+      "hidden": true,
+      "call": [
+        [
+          0,
+          0,
+          0
+        ],
+        0
+      ],
+      "expected": 6
+    },
+    {
+      "label": "No match",
+      "input": "nums = [1,2,3], k = 100",
+      "expectedOutput": "0",
+      "hidden": true,
+      "call": [
+        [
+          1,
+          2,
+          3
+        ],
+        100
+      ],
+      "expected": 0
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int subarraySum(int[] nums, int k) {\n        Map<Integer, Integer> counts = new HashMap<>();\n        counts.put(0, 1);\n        int running = 0;\n        int answer = 0;\n        for (int num : nums) {\n            running += num;\n            answer += counts.getOrDefault(running - k, 0);\n            counts.merge(running, 1, Integer::sum);\n        }\n        return answer;\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def subarray_sum(nums, k):\n    seen = defaultdict(int)\n    seen[0] = 1\n    total = count = 0\n    for value in nums:\n        total += value\n        count += seen[total - k]\n        seen[total] += 1\n    return count\n"
     }
   ],
   "animationSteps": [
@@ -241,39 +303,6 @@
       }
     }
   ],
-  "breakdown": [
-    {
-      "key": "given",
-      "prompt": "What are you handed?",
-      "options": [
-        "An array of non-negative numbers and a target",
-        "An array that may contain negative numbers, and a target sum",
-        "An array of prefix sums, already computed"
-      ],
-      "answerIndex": 1,
-      "explanation": "The numbers may be negative. That single fact is what closes off the sliding window, because the window stops being monotone."
-    },
-    {
-      "key": "asked",
-      "prompt": "What must you hand back?",
-      "options": [
-        "One subarray whose sum equals k",
-        "How many contiguous subarrays sum to k",
-        "The indices of the longest such subarray"
-      ],
-      "answerIndex": 1,
-      "explanation": "A count over all subarrays, not one example and not the longest. Two identical values in different places count separately."
-    },
-    {
-      "key": "shape",
-      "prompt": "Why does a sliding window fail here?",
-      "options": [
-        "Because with negative numbers, extending a window can lower its sum",
-        "Because the window would be too slow",
-        "Because the numbers are not integers"
-      ],
-      "answerIndex": 0,
-      "explanation": "Shrinking on a sum that is too large assumes the sum only grows as you extend, which negative numbers break. Working in prefix sums instead turns the question into counting earlier prefixes that differ by exactly k."
-    }
-  ]
+  "entrypoint": "subarray_sum",
+  "argumentMode": "PLAIN"
 }

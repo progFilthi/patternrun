@@ -13,6 +13,9 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import tools.jackson.databind.JsonNode;
 
 /** A checkpoint in the test panel (README section 10). */
 @Entity
@@ -45,4 +48,28 @@ public class ProblemTestCaseEntity {
     /** Hidden cases are never returned by the public API (README section 47). */
     @Column(name = "is_hidden", nullable = false)
     private Boolean isHidden;
+
+    /**
+     * Positional arguments for the problem's entrypoint, as a JSON array.
+     *
+     * This is what actually gets called. {@code inputData} is prose written for a human
+     * ("nums = [2,7,11,15], target = 9") and is never parsed; keeping the runnable form separate
+     * is what stops a negative number from being indistinguishable from a subtraction.
+     *
+     * Null means the case is display-only. A problem opts in to being runnable by having these
+     * set; until then it is served as content and never executed.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "call")
+    private JsonNode call;
+
+    /** The expected return value, compared structurally rather than as a string. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "expected_json")
+    private JsonNode expectedJson;
+
+    /** Whether this case can be handed to a runner. */
+    public boolean isRunnable() {
+        return call != null && expectedJson != null;
+    }
 }

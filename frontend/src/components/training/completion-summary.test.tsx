@@ -23,7 +23,14 @@ const problem = {
 } as unknown as ProblemDetail
 
 function stateWith(overrides: Partial<SessionState>): SessionState {
-  return { phase: "complete", hintsUsed: 0, predictions: [], breakdownPending: false, ...overrides }
+  return {
+    phase: "complete",
+    hintsUsed: 0,
+    predictions: [],
+    breakdownPending: false,
+    codePhase: "idle",
+    ...overrides,
+  }
 }
 
 const EARNED: CompletionResult = {
@@ -49,6 +56,10 @@ const EARNED: CompletionResult = {
   patternMastery: 80,
   personalBest: false,
   mistakesResolved: [],
+  // Phase 4. This session finished before the coding stage existed, so no code was evaluated and
+  // the outcome is absent rather than false: "not measured" and "measured and failed" differ.
+  codeAccepted: false,
+  solvedIndependently: false,
 }
 
 function renderSummary(state: SessionState, nextProblem?: ProblemSummary) {
@@ -125,6 +136,39 @@ describe("a successful completion", () => {
     expect(container.textContent).not.toContain("PROBLEM_COMPLETED")
     expect(container.textContent).not.toContain("PATTERN_IDENTIFIED")
     expect(container.textContent).not.toContain("COMBO_BONUS")
+  })
+})
+
+describe("the coding stage, restated once the session is over", () => {
+  it("says the solution passed, because the screen should not ignore the last five minutes", () => {
+    renderSummary(stateWith({ result: { ...EARNED, codeAccepted: true } }))
+
+    expect(screen.getByText(/passed the full evaluation set/)).toBeDefined()
+  })
+
+  it("says so unaided when nothing was revealed", () => {
+    renderSummary(
+      stateWith({ result: { ...EARNED, codeAccepted: true, solvedIndependently: true } }),
+    )
+
+    expect(screen.getByText(/without a hint/)).toBeDefined()
+  })
+
+  it("says nothing about the code when none was evaluated", () => {
+    // Absent, not false: "no code was run" is a different statement from "the code was wrong".
+    renderSummary(stateWith({ result: EARNED }))
+
+    expect(screen.queryByText(/passed the full evaluation set/)).toBeNull()
+  })
+
+  it("adds no second reward, no level-up and no confetti for the code", () => {
+    const { container } = renderSummary(
+      stateWith({ result: { ...EARNED, codeAccepted: true, totalXpAwarded: 75 } }),
+    )
+
+    // The rewards above are the celebration. A second one here is the arcade UI this is not.
+    expect(container.textContent?.match(/\+\d+ XP/g)).toHaveLength(1)
+    expect(container.textContent).not.toMatch(/congratulat|level up/i)
   })
 })
 

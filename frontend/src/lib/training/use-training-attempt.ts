@@ -5,13 +5,28 @@ import { useCallback, useRef, useState } from "react"
 import {
   SessionApiError,
   completeAttempt,
-  submitBreakdown,
+  fetchCodeState,
+  fetchNextHint,
   recordHint as sendHint,
   recordPattern as sendPattern,
   recordPrediction as sendPrediction,
+  revealSolution,
+  runCode,
+  saveCode,
   startAttempt as sendStart,
+  submitBreakdown,
+  submitCode,
 } from "@/lib/api/session"
-import type { AttemptMode, BreakdownEvaluation, CompletionResult } from "@/types/api"
+import type {
+  AttemptCodeState,
+  AttemptMode,
+  BreakdownEvaluation,
+  CompletionResult,
+  ExecutionResult,
+  HintSelection,
+  HintStage,
+  RevealedSolution,
+} from "@/types/api"
 
 /**
  * Drives one training session against the backend.
@@ -39,6 +54,16 @@ export type SessionPhase =
   | "complete"
   | "failed"
 
+/**
+ * Phase 4 adds one: the coding stage is in flight.
+ *
+ * Separate from {@link SessionPhase} because it is not a state of the session but a state of one
+ * request. A learner running code has not left the session and has not finished it, and folding
+ * this into the phase would make `phase === "active"` mean something different depending on which
+ * phase of the loop was on screen.
+ */
+export type CodePhase = "idle" | "saving" | "running" | "submitting" | "hinting" | "revealing"
+
 export interface CompletionInput {
   complexityTime: string
   complexitySpace: string
@@ -64,6 +89,10 @@ export interface SessionState {
   /** The server's verdict on how the problem was read. Absent until the step is submitted. */
   breakdown?: BreakdownEvaluation
   breakdownPending: boolean
+  /** Phase 4: what one run or submit concluded. The server's, never computed here. */
+  code?: ExecutionResult
+  /** Phase 4: which coding request is in flight, if any. */
+  codePhase: CodePhase
 }
 
 const INITIAL: SessionState = {
@@ -71,6 +100,7 @@ const INITIAL: SessionState = {
   hintsUsed: 0,
   predictions: [],
   breakdownPending: false,
+  codePhase: "idle",
 }
 
 export function useTrainingAttempt(problemSlug: string, mode: AttemptMode = "STANDARD") {
@@ -201,6 +231,129 @@ export function useTrainingAttempt(problemSlug: string, mode: AttemptMode = "STA
   )
 
   /**
+   * The saved source and the last verdict, so a reload can restore what was being written.
+   *
+   * A read that decides nothing. Rejecting when there is no attempt yet is deliberate: there is
+   * nothing to restore, and reporting that as a failure would make the editor look broken.
+   */
+  const loadCode = useCallback(async (): Promise<AttemptCodeState | null> => {
+    if (!state.attemptId) return null
+    return fetchCodeState(state.attemptId)
+  }, [state.attemptId])
+
+  /**
+   * Autosave.
+   *
+   * Fires after a pause in typing, so it shares no guard with the other actions: it must not
+   * cancel a submission, and a submission must not cancel it. Failures are swallowed, because a
+   * save that did not land is worth nothing compared to interrupting someone mid-sentence, and the
+   * next pause tries again.
+   */
+  const persistCode = useCallback(
+    (language: string, code: string) => {
+      if (!state.attemptId) return
+      setState((current) => ({ ...current, codePhase: "saving" }))
+      void saveCode(state.attemptId, language, code)
+        .catch(() => undefined)
+        .finally(() => setState((current) => ({ ...current, codePhase: "idle" })))
+    },
+    [state.attemptId],
+  )
+
+  /**
+   * Runs code against the visible examples and returns the server's verdict verbatim.
+   *
+   * Throws on a transport failure so the panel can say the request did not arrive, which is a
+   * different situation from a request that arrived and came back WRONG_ANSWER. Conflating them
+   * would tell a learner their code failed when the network did.
+   */
+  const runCodeFor = useCallback(
+    async (language: string, code: string): Promise<ExecutionResult> => {
+      if (!state.attemptId) {
+        throw new SessionApiError("session", 0, "This session never started. Go back and try again.")
+      }
+      setState((current) => ({ ...current, codePhase: "running" }))
+      try {
+        const result = await runCode(state.attemptId, language, code)
+        setState((current) => ({ ...current, code: result, codePhase: "idle" }))
+        return result
+      } catch (error) {
+        setState((current) => ({ ...current, codePhase: "idle" }))
+        throw error
+      }
+    },
+    [state.attemptId],
+  )
+
+  /**
+   * Evaluates against the hidden set.
+   *
+   * The only request that can make a problem solved, which is exactly why it is the only one that
+   * takes this path. Nothing it returns is interpreted here; the backend's outcome is displayed.
+   */
+  const submitCodeFor = useCallback(
+    async (language: string, code: string): Promise<ExecutionResult> => {
+      if (!state.attemptId) {
+        throw new SessionApiError("session", 0, "This session never started. Go back and try again.")
+      }
+      setState((current) => ({ ...current, codePhase: "submitting" }))
+      try {
+        const result = await submitCode(state.attemptId, language, code)
+        setState((current) => ({ ...current, code: result, codePhase: "idle" }))
+        return result
+      } catch (error) {
+        setState((current) => ({ ...current, codePhase: "idle" }))
+        throw error
+      }
+    },
+    [state.attemptId],
+  )
+
+  /**
+   * Asks which hint fits right now.
+   *
+   * The stage travels and the trigger does not. The backend derives the trigger from the last
+   * execution it observed, so a client cannot request the debugging ladder after a passing run and
+   * walk to the answer without ever having failed.
+   */
+  const askForHint = useCallback(
+    async (stage: HintStage = "CODING"): Promise<HintSelection | null> => {
+      if (!state.attemptId) return null
+      setState((current) => ({ ...current, codePhase: "hinting" }))
+      try {
+        const hint = await fetchNextHint(state.attemptId, stage)
+        setState((current) => ({ ...current, codePhase: "idle" }))
+        return hint
+      } catch (error) {
+        setState((current) => ({ ...current, codePhase: "idle" }))
+        throw error
+      }
+    },
+    [state.attemptId],
+  )
+
+  /**
+   * The reference implementation, and the fact that it was taken.
+   *
+   * Recorded server-side before the code is returned, so there is no path to the answer that does
+   * not also mark the session as assisted.
+   */
+  const revealReference = useCallback(async (): Promise<RevealedSolution> => {
+    if (!state.attemptId) {
+      throw new SessionApiError("session", 0, "This session never started. Go back and try again.")
+    }
+    setState((current) => ({ ...current, codePhase: "revealing" }))
+    try {
+      const revealed = await revealSolution(state.attemptId)
+      setState((current) => ({ ...current, codePhase: "idle" }))
+      return revealed
+    } catch (error) {
+      setState((current) => ({ ...current, codePhase: "idle" }))
+      throw error
+    }
+  }, [state.attemptId])
+
+  /**
    * Finishes the session and takes the server's verdict.
    *
    * `breakdownCorrect` is the result of the problem-reading check the learner just did. It is a
@@ -267,7 +420,22 @@ export function useTrainingAttempt(problemSlug: string, mode: AttemptMode = "STA
     return complete(pending)
   }, [state.pendingCompletion, complete])
 
-  return { state, start, choosePattern, revealHint, predict, submitReading, complete, retry }
+  return {
+    state,
+    start,
+    choosePattern,
+    revealHint,
+    predict,
+    submitReading,
+    loadCode,
+    persistCode,
+    runCode: runCodeFor,
+    submitCode: submitCodeFor,
+    askForHint,
+    revealReference,
+    complete,
+    retry,
+  }
 }
 
 export type TrainingAttempt = ReturnType<typeof useTrainingAttempt>

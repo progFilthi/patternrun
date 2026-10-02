@@ -15,8 +15,8 @@
   "examples": [
     {
       "input": "prices = [100, 80, 60, 70, 65, 75, 74, 80]",
-      "output": "[1, 1, 1, 2, 1, 4, 6, 7]",
-      "explanation": "Price 75 on day 6 covers 75, 74, 65 and 70, so the span is 4."
+      "output": "[1, 1, 1, 2, 1, 4, 1, 7]",
+      "explanation": "Price 75 on day 6 is covered by 70 three days back, so its span is 4. The 74 on day 7 has a greater price the very day before it, so its span drops back to 1."
     }
   ],
   "hints": [
@@ -66,26 +66,114 @@
     {
       "label": "Example 1",
       "input": "prices = [100,80,60,70,65,75,74,80]",
-      "expectedOutput": "[1,1,1,2,1,4,6,7]",
-      "hidden": false
+      "expectedOutput": "[1,1,1,2,1,4,1,7]",
+      "hidden": false,
+      "call": [
+        [
+          100,
+          80,
+          60,
+          70,
+          65,
+          75,
+          74,
+          80
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1,
+        2,
+        1,
+        4,
+        1,
+        7
+      ]
     },
     {
       "label": "Strictly increasing",
       "input": "prices = [1,2,3,4]",
       "expectedOutput": "[1,2,3,4]",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4
+      ]
     },
     {
-      "label": "All equal",
+      "label": "Flat prices",
       "input": "prices = [5,5,5]",
-      "expectedOutput": "[3,2,1]",
-      "hidden": true
+      "expectedOutput": "[1,2,3]",
+      "hidden": true,
+      "call": [
+        [
+          5,
+          5,
+          5
+        ]
+      ],
+      "expected": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "label": "Single price",
+      "input": "prices = [42]",
+      "expectedOutput": "[1]",
+      "hidden": true,
+      "call": [
+        [
+          42
+        ]
+      ],
+      "expected": [
+        1
+      ]
+    },
+    {
+      "label": "Drop then recover",
+      "input": "prices = [10,4,3,2,1]",
+      "expectedOutput": "[1,1,1,1,1]",
+      "hidden": true,
+      "call": [
+        [
+          10,
+          4,
+          3,
+          2,
+          1
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class StockSpanner {\n    private final Deque<int[]> stack = new ArrayDeque<>();   // {price, span}\n\n    public int next(int price) {\n        int span = 1;\n        while (!stack.isEmpty() && stack.peek()[0] <= price) {\n            span += stack.pop()[1];\n        }\n        stack.push(new int[]{price, span});\n        return span;\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def stock_span(prices):\n    spans = []\n    waiting = []\n    for index, price in enumerate(prices):\n        while waiting and prices[waiting[-1]] <= price:\n            waiting.pop()\n        spans.append(index - waiting[-1] if waiting else index + 1)\n        waiting.append(index)\n    return spans\n"
     }
   ],
   "animationSteps": [
@@ -209,5 +297,7 @@
       "answerIndex": 0,
       "explanation": "It has to be O(1) amortized, which rules out rescanning. That is only possible by carrying state: whenever a new price is no higher than the top of the stack, that top's span is finished and folds into the new one."
     }
-  ]
+  ],
+  "entrypoint": "stock_span",
+  "argumentMode": "PLAIN"
 }

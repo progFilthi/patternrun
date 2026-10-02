@@ -45,6 +45,7 @@ describe("SessionProgress", () => {
       expect.stringContaining("Hint"),
       expect.stringContaining("Explain"),
       expect.stringContaining("Complexity"),
+      expect.stringContaining("Code"),
       expect.stringContaining("Finish"),
     ])
   })
@@ -57,18 +58,18 @@ describe("SessionProgress", () => {
   describe("locking", () => {
     it("locks every phase past the reachable one", () => {
       renderRail({ currentIndex: 0, reachableIndex: 0 })
-      expect(reachableFlags()).toEqual([true, false, false, false, false, false, false])
+      expect(reachableFlags()).toEqual([true, false, false, false, false, false, false, false])
     })
 
     it("offers every phase up to the furthest reached", () => {
       renderRail({ currentIndex: 2, reachableIndex: 4 })
-      expect(reachableFlags()).toEqual([true, true, true, true, true, false, false])
+      expect(reachableFlags()).toEqual([true, true, true, true, true, false, false, false])
     })
 
     it("keeps a phase that was reached reachable after moving back to the start", () => {
       // The regression that matters: rereading Read must not re-lock what was already earned.
       renderRail({ currentIndex: FIRST_PHASE, reachableIndex: 4 })
-      expect(reachableFlags()).toEqual([true, true, true, true, true, false, false])
+      expect(reachableFlags()).toEqual([true, true, true, true, true, false, false, false])
       expect(stepButtons()[4].hasAttribute("disabled")).toBe(false)
     })
 
@@ -197,7 +198,10 @@ describe("SessionProgress", () => {
       renderRail({ currentIndex: 0, reachableIndex: 0 })
 
       expect(stepButtons()[1].textContent).toContain("Locked: Identify")
-      expect(stepButtons()[6].textContent).toContain("Locked: Finish")
+      // By name rather than by index, so a future insertion cannot quietly change which phase
+      // this is asserting about.
+      const finishIndex = PHASES.findIndex((phase) => phase.id === "COMPLETE")
+      expect(stepButtons()[finishIndex].textContent).toContain("Locked: Finish")
     })
 
     it("describes the lock in the tooltip too", () => {

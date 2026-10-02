@@ -12,6 +12,7 @@ import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -82,6 +83,20 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleRateLimit(RateLimitExceededException ex,
                                                             HttpServletRequest request) {
         return build(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request);
+    }
+
+    /**
+     * The wrong verb on a real path.
+     *
+     * Falls through to the catch-all otherwise, which answers 500. That is a lie: nothing went
+     * wrong, and a learner who guessed a URL should be told the method is wrong rather than told to
+     * try again. It matters more than it looks for Phase 4, where the solution endpoint is
+     * deliberately POST-only so that fetching the answer is itself a recorded event.
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiErrorResponse> handleWrongMethod(
+            HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        return build(HttpStatus.METHOD_NOT_ALLOWED, "That method is not supported here.", request);
     }
 
     /** Same error shape for anything unexpected, without exposing internals (README section 90). */

@@ -74,25 +74,134 @@
       "label": "Example 1",
       "input": "nums = [-1,0,1,2,-1,-4]",
       "expectedOutput": "[[-1,-1,2],[-1,0,1]]",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          -1,
+          0,
+          1,
+          2,
+          -1,
+          -4
+        ]
+      ],
+      "expected": [
+        [
+          -1,
+          -1,
+          2
+        ],
+        [
+          -1,
+          0,
+          1
+        ]
+      ]
     },
     {
       "label": "No triplet",
       "input": "nums = [0,1,1]",
       "expectedOutput": "[]",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          0,
+          1,
+          1
+        ]
+      ],
+      "expected": []
     },
     {
       "label": "All zeros",
       "input": "nums = [0,0,0,0]",
       "expectedOutput": "[[0,0,0]]",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "expected": [
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "label": "All negative",
+      "input": "nums = [-2,0,1,1,2]",
+      "expectedOutput": "[[-2,0,2],[-2,1,1]]",
+      "hidden": true,
+      "call": [
+        [
+          -2,
+          0,
+          1,
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        [
+          -2,
+          0,
+          2
+        ],
+        [
+          -2,
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "label": "Unsorted input",
+      "input": "nums = [3,0,-2,-1,1,2]",
+      "expectedOutput": "[[-2,-1,3],[-2,0,2],[-1,0,1]]",
+      "hidden": true,
+      "call": [
+        [
+          3,
+          0,
+          -2,
+          -1,
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        [
+          -2,
+          -1,
+          3
+        ],
+        [
+          -2,
+          0,
+          2
+        ],
+        [
+          -1,
+          0,
+          1
+        ]
+      ]
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public List<List<Integer>> threeSum(int[] nums) {\n        List<List<Integer>> result = new ArrayList<>();\n        Arrays.sort(nums);\n        for (int i = 0; i < nums.length - 2; i++) {\n            if (nums[i] > 0) break;\n            if (i > 0 && nums[i] == nums[i - 1]) continue;\n            int left = i + 1;\n            int right = nums.length - 1;\n            while (left < right) {\n                int total = nums[i] + nums[left] + nums[right];\n                if (total < 0) {\n                    left++;\n                } else if (total > 0) {\n                    right--;\n                } else {\n                    result.add(List.of(nums[i], nums[left], nums[right]));\n                    while (left < right && nums[left] == nums[left + 1]) left++;\n                    while (left < right && nums[right] == nums[right - 1]) right--;\n                    left++;\n                    right--;\n                }\n            }\n        }\n        return result;\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def three_sum(nums):\n    ordered = sorted(nums)\n    found = []\n    for i in range(len(ordered) - 2):\n        if i > 0 and ordered[i] == ordered[i - 1]:\n            continue\n        if ordered[i] > 0:\n            break\n        left, right = i + 1, len(ordered) - 1\n        while left < right:\n            total = ordered[i] + ordered[left] + ordered[right]\n            if total == 0:\n                found.append([ordered[i], ordered[left], ordered[right]])\n                left += 1\n                right -= 1\n                while left < right and ordered[left] == ordered[left - 1]:\n                    left += 1\n                while left < right and ordered[right] == ordered[right + 1]:\n                    right -= 1\n            elif total < 0:\n                left += 1\n            else:\n                right -= 1\n    return found\n"
     }
   ],
   "animationSteps": [
@@ -219,39 +328,6 @@
       }
     }
   ],
-  "breakdown": [
-    {
-      "key": "given",
-      "prompt": "What are you handed?",
-      "options": [
-        "One integer array, with no target",
-        "Three arrays to pick one element from each",
-        "An array already known to contain a zero-sum triplet"
-      ],
-      "answerIndex": 0,
-      "explanation": "A single array and nothing else. There is no target to hit, which is the whole difference from Two Sum: the sum you need is fixed at zero."
-    },
-    {
-      "key": "asked",
-      "prompt": "What must you hand back?",
-      "options": [
-        "The indices of one zero-sum triplet",
-        "Every unique zero-sum triplet, with no duplicates",
-        "How many zero-sum triplets exist"
-      ],
-      "answerIndex": 1,
-      "explanation": "All of them, not one, and each listed once. Returning a single triplet would answer a different and much easier question."
-    },
-    {
-      "key": "shape",
-      "prompt": "Why is sorting the array the useful first move?",
-      "options": [
-        "So the numbers are easier to compare",
-        "So sorting alone produces the answer",
-        "Because it does not need sorting at all"
-      ],
-      "answerIndex": 0,
-      "explanation": "Sorted, each value's complements sit together, so two pointers can walk inward and skip duplicates by jumping over runs of equal values rather than reporting them again."
-    }
-  ]
+  "entrypoint": "three_sum",
+  "argumentMode": "PLAIN"
 }

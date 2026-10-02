@@ -19,9 +19,9 @@
       "explanation": "The fresh orange at the bottom middle is four cells away from the nearest rotten orange."
     },
     {
-      "input": "grid = [[0,2]]",
+      "input": "grid = [[2,1,1],[1,0,0],[0,0,1]]",
       "output": "-1",
-      "explanation": "A fresh orange with no rotten neighbour can never rot."
+      "explanation": "The fresh orange in the bottom right corner is walled in by empty cells, so the rot can never reach it and the answer is -1."
     }
   ],
   "hints": [
@@ -73,25 +73,116 @@
       "label": "Example 1",
       "input": "grid = [[2,1,1],[1,1,0],[0,1,1]]",
       "expectedOutput": "4",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          [
+            2,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": 4
     },
     {
-      "label": "Unreachable fresh orange",
-      "input": "grid = [[0,2]]",
+      "label": "Fresh orange walled in",
+      "input": "grid = [[2,1,1],[1,0,0],[0,0,1]]",
       "expectedOutput": "-1",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          [
+            2,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ]
+      ],
+      "expected": -1
     },
     {
       "label": "Already done",
       "input": "grid = [[2]]",
       "expectedOutput": "0",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        [
+          [
+            2
+          ]
+        ]
+      ],
+      "expected": 0
+    },
+    {
+      "label": "Everything rots at once",
+      "input": "grid = [[2,2],[2,2]]",
+      "expectedOutput": "0",
+      "hidden": true,
+      "call": [
+        [
+          [
+            2,
+            2
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      ],
+      "expected": 0
+    },
+    {
+      "label": "Single fresh orange",
+      "input": "grid = [[2],[1],[1]]",
+      "expectedOutput": "2",
+      "hidden": true,
+      "call": [
+        [
+          [
+            2
+          ],
+          [
+            1
+          ],
+          [
+            1
+          ]
+        ]
+      ],
+      "expected": 2
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int orangesRotting(int[][] grid) {\n        int rows = grid.length;\n        int cols = grid[0].length;\n        Deque<int[]> queue = new ArrayDeque<>();\n        int fresh = 0;\n        for (int r = 0; r < rows; r++) {\n            for (int c = 0; c < cols; c++) {\n                if (grid[r][c] == 1) queue.add(new int[]{r, c});\n                else if (grid[r][c] == 0) fresh++;\n            }\n        }\n        int minutes = 0;\n        while (!queue.isEmpty() && fresh > 0) {\n            int size = queue.size();\n            for (int i = 0; i < size; i++) {\n                int[] cell = queue.poll();\n                for (int[] dir : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {\n                    int nr = cell[0] + dir[0];\n                    int nc = cell[1] + dir[1];\n                    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] == 0) {\n                        grid[nr][nc] = 1;\n                        fresh--;\n                        queue.add(new int[]{nr, nc});\n                    }\n                }\n            }\n            minutes++;\n        }\n        return fresh == 0 ? minutes : -1;\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def oranges_rotting(grid):\n    if not grid or not grid[0]:\n        return 0\n    rows, columns = len(grid), len(grid[0])\n    fresh = 0\n    queue = deque()\n    for row in range(rows):\n        for column in range(columns):\n            if grid[row][column] == 2:\n                queue.append((row, column))\n            elif grid[row][column] == 1:\n                fresh += 1\n    minutes = 0\n    while queue:\n        for _ in range(len(queue)):\n            row, column = queue.popleft()\n            for delta_row, delta_column in ((1, 0), (-1, 0), (0, 1), (0, -1)):\n                next_row, next_column = row + delta_row, column + delta_column\n                if 0 <= next_row < rows and 0 <= next_column < columns:\n                    if grid[next_row][next_column] == 1:\n                        grid[next_row][next_column] = 2\n                        fresh -= 1\n                        queue.append((next_row, next_column))\n        minutes += 1\n    return -1 if fresh else minutes - 1\n"
     }
   ],
   "animationSteps": [
@@ -316,39 +407,6 @@
       }
     }
   ],
-  "breakdown": [
-    {
-      "key": "given",
-      "prompt": "What are you handed?",
-      "options": [
-        "A grid where each cell is fresh, rotten or empty",
-        "A single rotten orange and its position",
-        "A list of orange positions with timestamps"
-      ],
-      "answerIndex": 0,
-      "explanation": "One grid with three cell states, and empties are neither fresh nor rotten. Empty cells never need to be rotted or counted."
-    },
-    {
-      "key": "asked",
-      "prompt": "What must you hand back?",
-      "options": [
-        "Which oranges will rot",
-        "The minutes until no fresh orange remains, or -1",
-        "The count of oranges that rotted"
-      ],
-      "answerIndex": 1,
-      "explanation": "A time, not a set. Every rotten cell starts spreading simultaneously, so the answer is how long until the last fresh one is reached."
-    },
-    {
-      "key": "shape",
-      "prompt": "Why does the search have to start from every rotten orange at once?",
-      "options": [
-        "Because rot spreads outward one step per minute from all of them",
-        "Because rotten oranges are sorted by position",
-        "Because only the first one spreads"
-      ],
-      "answerIndex": 0,
-      "explanation": "Rot advances one cell per minute from every rotten orange at the same time, so the arrival time at any cell is its distance from the nearest rotten one. Growing outward level by level gets every cell's time at once."
-    }
-  ]
+  "entrypoint": "oranges_rotting",
+  "argumentMode": "PLAIN"
 }

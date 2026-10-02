@@ -63,4 +63,34 @@ public interface AttemptRepository extends JpaRepository<AttemptEntity, UUID> {
             @Param("userId") UUID userId,
             @Param("from") Instant from,
             @Param("to") Instant to);
+
+    /**
+     * Look one up, or fail with the wording every caller should use.
+     *
+     * Owned by the repository because "whose attempt is this" is one question with one answer, and
+     * the coding stage needed it too. Duplicating the lookup would have produced two places to get
+     * the 404-versus-403 rule right, and getting it wrong in one of them turns the API into a way
+     * to test whether an attempt id exists.
+     */
+    default AttemptEntity requireOwned(UUID userId, UUID attemptId) {
+        return findByIdAndUserId(attemptId, userId)
+                .orElseThrow(() -> new com.patternrun.common.ResourceNotFoundException(
+                        "Attempt not found: " + attemptId));
+    }
+
+    /**
+     * Look one up and require it to still be open.
+     *
+     * Shared with the coding stage so a finished session fails identically whether the learner is
+     * submitting code or finishing the session, instead of one path allowing writes to a completed
+     * attempt and the other not.
+     */
+    default AttemptEntity requireLive(UUID userId, UUID attemptId) {
+        AttemptEntity attempt = requireOwned(userId, attemptId);
+        if (attempt.isCompleted()) {
+            throw new com.patternrun.security.ConflictException(
+                    "This session is already finished. Start a new attempt to keep going.");
+        }
+        return attempt;
+    }
 }

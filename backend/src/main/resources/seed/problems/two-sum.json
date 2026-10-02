@@ -47,6 +47,78 @@
     {
       "level": 5,
       "content": "Use HashMap<Integer, Integer> seen. Check the complement BEFORE storing the current number, otherwise a single element could match itself."
+    },
+    {
+      "level": 1,
+      "stage": "CODING",
+      "trigger": "ANY",
+      "content": "Think about what information you would like to remember while you scan the array."
+    },
+    {
+      "level": 2,
+      "stage": "CODING",
+      "trigger": "ANY",
+      "content": "For each number, ask whether the value needed to reach the target has already appeared."
+    },
+    {
+      "level": 3,
+      "stage": "CODING",
+      "trigger": "ANY",
+      "content": "target - currentValue is the value you should be looking for."
+    },
+    {
+      "level": 1,
+      "stage": "CODING",
+      "trigger": "WRONG_ANSWER",
+      "content": "Check what you store, and when. The classic bug is putting the current number in before testing for its complement."
+    },
+    {
+      "level": 2,
+      "stage": "CODING",
+      "trigger": "WRONG_ANSWER",
+      "content": "Ask whether your lookup structure actually holds the complement you are about to ask for."
+    },
+    {
+      "level": 3,
+      "stage": "CODING",
+      "trigger": "WRONG_ANSWER",
+      "content": "The value you need is target - current. If that value is not in your structure yet, no pair ending at this position exists."
+    },
+    {
+      "level": 1,
+      "stage": "CODING",
+      "trigger": "RUNTIME_ERROR",
+      "content": "A NameError means the function is not named the way the runner calls it. Check the spelling, including underscores."
+    },
+    {
+      "level": 2,
+      "stage": "CODING",
+      "trigger": "RUNTIME_ERROR",
+      "content": "Read the last line of the error. It names the exception and the value that caused it, which is nearly always enough to locate the line."
+    },
+    {
+      "level": 1,
+      "stage": "CODING",
+      "trigger": "SYNTAX_ERROR",
+      "content": "Python could not parse the file, so it never ran. Nothing in the error is about your logic; it is about punctuation and indentation."
+    },
+    {
+      "level": 2,
+      "stage": "CODING",
+      "trigger": "SYNTAX_ERROR",
+      "content": "The error names a line number. Look at the line before it as well: an unbalanced bracket or an unexpected indent is usually reported one line late."
+    },
+    {
+      "level": 1,
+      "stage": "CODING",
+      "trigger": "TIME_LIMIT_EXCEEDED",
+      "content": "A timeout means the code is correct but too slow. That is a complexity problem, not a correctness problem."
+    },
+    {
+      "level": 2,
+      "stage": "CODING",
+      "trigger": "TIME_LIMIT_EXCEEDED",
+      "content": "Count how many times your loop scans the whole array from the inside. Nested full scans are O(n^2), and this problem is solvable in O(n)."
     }
   ],
   "pseudocode": [
@@ -74,25 +146,141 @@
       "label": "Example 1",
       "input": "nums = [2,7,11,15], target = 9",
       "expectedOutput": "[0,1]",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          2,
+          7,
+          11,
+          15
+        ],
+        9
+      ],
+      "expected": [
+        0,
+        1
+      ]
     },
     {
       "label": "Negative values",
       "input": "nums = [-3, 4, 3, 90], target = 0",
       "expectedOutput": "[0,2]",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          -3,
+          4,
+          3,
+          90
+        ],
+        0
+      ],
+      "expected": [
+        0,
+        2
+      ]
     },
     {
       "label": "Duplicate values",
       "input": "nums = [3,2,4], target = 6",
       "expectedOutput": "[1,2]",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        [
+          3,
+          2,
+          4
+        ],
+        6
+      ],
+      "expected": [
+        1,
+        2
+      ]
+    },
+    {
+      "label": "Pair at the very end",
+      "input": "nums = [1, 2, 3, 4, 5], target = 9",
+      "expectedOutput": "[3,4]",
+      "hidden": true,
+      "call": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        9
+      ],
+      "expected": [
+        3,
+        4
+      ]
+    },
+    {
+      "label": "Two zeros",
+      "input": "nums = [0, 4, 3, 0], target = 0",
+      "expectedOutput": "[0,3]",
+      "hidden": true,
+      "call": [
+        [
+          0,
+          4,
+          3,
+          0
+        ],
+        0
+      ],
+      "expected": [
+        0,
+        3
+      ]
+    },
+    {
+      "label": "Opposite extremes",
+      "input": "nums = [-1000000000, 1000000000], target = 0",
+      "expectedOutput": "[0,1]",
+      "hidden": true,
+      "call": [
+        [
+          -1000000000,
+          1000000000
+        ],
+        0
+      ],
+      "expected": [
+        0,
+        1
+      ]
+    },
+    {
+      "label": "Pair straddles the middle",
+      "input": "nums = [5, 75, 25], target = 100",
+      "expectedOutput": "[1,2]",
+      "hidden": true,
+      "call": [
+        [
+          5,
+          75,
+          25
+        ],
+        100
+      ],
+      "expected": [
+        1,
+        2
+      ]
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        Map<Integer, Integer> seen = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            int needed = target - nums[i];\n            if (seen.containsKey(needed)) {\n                return new int[]{seen.get(needed), i};\n            }\n            seen.put(nums[i], i);\n        }\n        return new int[]{};\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def two_sum(nums, target):\n    seen = {}\n    for index, value in enumerate(nums):\n        needed = target - value\n        if needed in seen:\n            return [seen[needed], index]\n        seen[value] = index\n    return []"
     }
   ],
   "animationSteps": [
@@ -267,5 +455,6 @@
       "answerIndex": 1,
       "explanation": "One answer and no self-matching element is the constraint that shapes the whole solution. It is why you look for the complement before you store the current number."
     }
-  ]
+  ],
+  "entrypoint": "two_sum"
 }

@@ -7,7 +7,10 @@ import { PageHeader, Section } from "@/components/layout/page-header"
 
 /**
  * Dashboard: answer "what should I train now?" first, then show the pattern system.
- * Progress figures arrive with the game layer in Phase 3.
+ *
+ * Progress lives on its own page rather than here. The dashboard is a way in from a cold start,
+ * and a learner who already has history does not want a wall of numbers before they can reach a
+ * problem --- they want /progress, which is one click away.
  */
 export const dynamic = "force-dynamic"
 

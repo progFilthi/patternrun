@@ -72,25 +72,89 @@
       "label": "Example 1",
       "input": "nums = [3,4,5,1,2]",
       "expectedOutput": "1",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          3,
+          4,
+          5,
+          1,
+          2
+        ]
+      ],
+      "expected": 1
     },
     {
       "label": "Pivot at index 4",
       "input": "nums = [4,5,6,7,0,1,2]",
       "expectedOutput": "0",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          4,
+          5,
+          6,
+          7,
+          0,
+          1,
+          2
+        ]
+      ],
+      "expected": 0
     },
     {
       "label": "Single element",
       "input": "nums = [11]",
       "expectedOutput": "11",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        [
+          11
+        ]
+      ],
+      "expected": 11
+    },
+    {
+      "label": "Not rotated",
+      "input": "nums = [1,2,3,4,5]",
+      "expectedOutput": "1",
+      "hidden": true,
+      "call": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "expected": 1
+    },
+    {
+      "label": "Minimum last",
+      "input": "nums = [2,3,4,5,1]",
+      "expectedOutput": "1",
+      "hidden": true,
+      "call": [
+        [
+          2,
+          3,
+          4,
+          5,
+          1
+        ]
+      ],
+      "expected": 1
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int findMin(int[] nums) {\n        int low = 0;\n        int high = nums.length - 1;\n        while (low < high) {\n            int mid = low + (high - low) / 2;\n            if (nums[mid] > nums[high]) {\n                low = mid + 1;\n            } else {\n                high = mid;\n            }\n        }\n        return nums[low];\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def find_min(nums):\n    low, high = 0, len(nums) - 1\n    while low < high:\n        middle = (low + high) // 2\n        if nums[middle] > nums[high]:\n            low = middle + 1\n        else:\n            high = middle\n    return nums[low]\n"
     }
   ],
   "animationSteps": [
@@ -216,39 +280,6 @@
       }
     }
   ],
-  "breakdown": [
-    {
-      "key": "given",
-      "prompt": "What are you handed?",
-      "options": [
-        "An array that is sorted ascending, unrotated",
-        "An ascending array rotated at an unknown pivot, values unique",
-        "An arbitrary array of unique values"
-      ],
-      "answerIndex": 1,
-      "explanation": "It was sorted before it was rotated, once, and every value is distinct. The sort is still there underneath, which is what makes a log-time search possible at all."
-    },
-    {
-      "key": "asked",
-      "prompt": "What must you hand back?",
-      "options": [
-        "The index of the minimum element",
-        "The minimum element itself",
-        "The pivot index where the rotation happened"
-      ],
-      "answerIndex": 1,
-      "explanation": "The value, not its position, and not the pivot. You are not being asked to undo the rotation."
-    },
-    {
-      "key": "shape",
-      "prompt": "What makes binary search valid on a rotated array?",
-      "options": [
-        "Rotated arrays are sorted if you ignore one element",
-        "At least one half of the range is still sorted",
-        "The rotation happens to be in the middle"
-      ],
-      "answerIndex": 1,
-      "explanation": "Whatever the pivot, one of the two halves is untouched and sorted. Comparing the midpoint against the low end tells you which half is the real one, and the minimum can only be hiding there."
-    }
-  ]
+  "entrypoint": "find_min",
+  "argumentMode": "PLAIN"
 }

@@ -88,19 +88,77 @@ every build, and `SeedContentReaderTest` checks the files themselves.
 
 ## API
 
-Base path `/api/v1`. All endpoints are read only in Phase 1.
+Base path `/api/v1`.
 
 ``` http
-GET /api/v1/patterns
-GET /api/v1/patterns/{slug}
-GET /api/v1/patterns/{slug}/problems
+GET    /api/v1/patterns
+GET    /api/v1/patterns/{slug}
+GET    /api/v1/patterns/{slug}/problems
 
-GET /api/v1/problems?pattern=&difficulty=&page=&size=&sort=
-GET /api/v1/problems/{slug}
-GET /api/v1/problems/{slug}/hints
-GET /api/v1/problems/{slug}/animation
-GET /api/v1/problems/{slug}/test-cases
+GET    /api/v1/problems?pattern=&difficulty=&page=&size=&sort=
+GET    /api/v1/problems/{slug}
+GET    /api/v1/problems/{slug}/breakdown
+GET    /api/v1/problems/{slug}/hints
+GET    /api/v1/problems/{slug}/animation
+GET    /api/v1/problems/{slug}/test-cases
+
+POST   /api/v1/auth/session
+GET    /api/v1/auth/me
+POST   /api/v1/auth/register
+POST   /api/v1/auth/login
+POST   /api/v1/auth/logout
+
+POST   /api/v1/attempts
+POST   /api/v1/attempts/{id}/pattern
+POST   /api/v1/attempts/{id}/hint
+GET    /api/v1/attempts/{id}/hint/next?stage=
+POST   /api/v1/attempts/{id}/predict
+POST   /api/v1/attempts/{id}/breakdown
+POST   /api/v1/attempts/{id}/code
+POST   /api/v1/attempts/{id}/code/save
+GET    /api/v1/attempts/{id}/code
+POST   /api/v1/attempts/{id}/code/run
+POST   /api/v1/attempts/{id}/code/submit
+POST   /api/v1/attempts/{id}/solution
+POST   /api/v1/attempts/{id}/complete
+
+GET    /api/v1/progress
+GET    /api/v1/progress/patterns
+GET    /api/v1/progress/problems
+GET    /api/v1/progress/streak
+GET    /api/v1/progress/daily
+GET    /api/v1/progress/review
 ```
+
+The coding-stage endpoints hang off the attempt rather than getting their own controller, because a
+code submission is an event inside a training session, not a separate resource.
+
+`/solution` is a POST on purpose. A `GET` would hand the answer to anyone who guessed the URL and
+would leave no record that it happened; the POST against a live attempt means the fetch is itself
+the recorded event.
+
+### The client/server boundary
+
+The browser sends what the learner chose and the source they wrote. It never sends a verdict.
+
+``` text
+sent      language, code, chosenIndex, level, stage, problemSlug,
+          complexityTime, complexitySpace, durationMs, predictions
+
+never     passed, accepted, outcome, correct, xp, awards, combo, mastery,
+          grade, patternCorrect, complexityCorrect, breakdownCorrect,
+          predictionsCorrect, codeAccepted, solvedIndependently,
+          expected, entrypoint, trigger
+```
+
+`ExecuteCodeRequest` has no field a verdict could arrive in, so one is discarded rather than
+honoured. `CodeExecutionApiIT` posts all of them and asserts the run still comes back
+`WRONG_ANSWER`; `use-training-attempt.test.ts` asserts the same from the client side.
+
+Two consequences worth remembering: the entrypoint is the server's, because a client that chose
+which function to call could choose its own argument shape; and the hint trigger is the server's,
+because a client that could name its own trigger could ask for the debugging ladder after a passing
+submission.
 
 Query parameters are validated with Bean Validation: `page >= 0`, `1 <= size <= 100`, `pattern`
 must be a slug, `sort` must be a field name. Hidden test cases are never returned by any
@@ -155,6 +213,17 @@ cd backend
 ./mvnw spring-boot:run
 ```
 
+With code execution, which needs the runner image built first:
+
+``` bash
+docker build -t patternrun-executor:py3 backend/executor
+PATTERN_RUNNER_ENABLED=true ./mvnw spring-boot:run
+```
+
+`PATTERN_RUNNER_ENABLED` defaults to `false` and that default is the security model, not a
+convenience. Without a runner the API reports "running code is not enabled on this server" and
+there is no in-process fallback. See `backend/executor/README.md`.
+
 The repo root also has an aggregator `pom.xml`, so `./mvnw verify` from the root builds the whole
 project.
 
@@ -175,18 +244,41 @@ cd backend
 | `DB_USERNAME` / `DB_PASSWORD` | `patternrun` | local |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | local |
 | `PATTERN_SEED_ENABLED` | `true` | both |
+| `PATTERN_RUNNER_ENABLED` | `false` | local, with code execution |
+| `PATTERN_RUNNER_IMAGE` | `patternrun-executor:py3` | local, with code execution |
 | `PORT` | `8080` | Render |
 
 Production values come from environment variables only. Never commit secrets.
 
+## Runnable content
+
+All twenty problems are runnable. Each carries an `entrypoint`, structured `call` and `expected` on
+every test case, and a Python reference solution.
+
+`problems.argument_mode` says how the runner turns stored arguments into a call. `PLAIN` is the
+default and is the eighteen problems whose arguments are already the values their function wants.
+`TREE` builds a binary tree from a level-order array for the two tree problems, so a learner's file
+contains only their function.
+
+`ReferenceSolutionsIT` runs every shipped reference against every shipped case, and is the reason
+nine wrong published answers were caught. It skips without a Python interpreter.
+
 ## Deliberately not built yet
 
-Authentication, users, attempts, XP, mastery, code execution, AI and gamification are all out of
-scope for Phase 1. Solutions are stored as content for the hint level 5 reveal and are not
-served by any endpoint yet.
+- **A second language.** Python only, by request. `CodeExecutionProvider` is the seam.
+- **A container pool.** Each submission starts a container, which dominates latency. See
+  `backend/executor/README.md`.
+- **Staged hint rungs outside Two Sum.** Only Two Sum has `CODING`-stage hints. The other nineteen
+  fall back to the generic five-rung ladder, which works but is less useful at the point of
+  failure.
+- **A second language.** Python only, by request. `CodeExecutionProvider` is the seam.
+- **Gating Phase 3's awards on accepted code.** `codeAccepted` is reported and feeds nothing yet.
+  That is a product decision to be made with the evidence visible.
+- **Mistake-journal entries for code failures.** The execution log holds everything an entry would
+  need; classifying them wants real data first.
 
-## Next phase
+## Next
 
-Phase 2 owns the training loop: attempts, hint ladder tracking, pattern guess, completion,
-XP and mastery. That is where the `users` and progress tables come in, and it should not start
-before the frontend consumes the contracts above.
+Phase 4 proved the loop on Two Sum alone. Generalising the execution content to the remaining
+nineteen problems is content work, not code work: the runner, the provider boundary and the editor
+are already generic.

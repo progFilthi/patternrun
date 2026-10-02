@@ -15,8 +15,8 @@
   "examples": [
     {
       "input": "grid = [[\"1\",\"1\",\"0\",\"0\"],[\"0\",\"1\",\"0\",\"0\"],[\"1\",\"0\",\"0\",\"0\"]]",
-      "output": "3",
-      "explanation": "There are two small islands in the top left and one in the bottom left."
+      "output": "2",
+      "explanation": "The three land cells in the top left touch each other, so they are one island. The bottom-left cell is cut off from them by water, so it is a second."
     }
   ],
   "hints": [
@@ -64,26 +64,112 @@
     {
       "label": "Example 1",
       "input": "grid = [[\"1\",\"1\",\"0\",\"0\"],[\"0\",\"1\",\"0\",\"0\"],[\"1\",\"0\",\"0\",\"0\"]]",
-      "expectedOutput": "3",
-      "hidden": false
+      "expectedOutput": "2",
+      "hidden": false,
+      "call": [
+        [
+          [
+            "1",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0",
+            "0"
+          ]
+        ]
+      ],
+      "expected": 2
     },
     {
       "label": "Single cell land",
       "input": "grid = [[\"1\"]]",
       "expectedOutput": "1",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          [
+            "1"
+          ]
+        ]
+      ],
+      "expected": 1
     },
     {
       "label": "All water",
       "input": "grid = [[\"0\",\"0\"],[\"0\",\"0\"]]",
       "expectedOutput": "0",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        [
+          [
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0"
+          ]
+        ]
+      ],
+      "expected": 0
+    },
+    {
+      "label": "Checkerboard",
+      "input": "grid = [[\"1\",\"0\"],[\"0\",\"1\"]]",
+      "expectedOutput": "2",
+      "hidden": true,
+      "call": [
+        [
+          [
+            "1",
+            "0"
+          ],
+          [
+            "0",
+            "1"
+          ]
+        ]
+      ],
+      "expected": 2
+    },
+    {
+      "label": "One big island",
+      "input": "grid = [[\"1\",\"1\"],[\"1\",\"1\"]]",
+      "expectedOutput": "1",
+      "hidden": true,
+      "call": [
+        [
+          [
+            "1",
+            "1"
+          ],
+          [
+            "1",
+            "1"
+          ]
+        ]
+      ],
+      "expected": 1
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int numIslands(char[][] grid) {\n        int count = 0;\n        for (int row = 0; row < grid.length; row++) {\n            for (int col = 0; col < grid[row].length; col++) {\n                if (grid[row][col] == '1') {\n                    count++;\n                    fill(grid, row, col);\n                }\n            }\n        }\n        return count;\n    }\n\n    private void fill(char[][] grid, int row, int col) {\n        if (row < 0 || col < 0 || row >= grid.length || col >= grid[row].length || grid[row][col] != '1') {\n            return;\n        }\n        grid[row][col] = '0';\n        fill(grid, row + 1, col);\n        fill(grid, row - 1, col);\n        fill(grid, row, col + 1);\n        fill(grid, row, col - 1);\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def num_islands(grid):\n    if not grid or not grid[0]:\n        return 0\n    rows, columns = len(grid), len(grid[0])\n    seen = [[False] * columns for _ in range(rows)]\n\n    def flood(start_row, start_column):\n        queue = deque([(start_row, start_column)])\n        seen[start_row][start_column] = True\n        while queue:\n            row, column = queue.popleft()\n            for delta_row, delta_column in ((1, 0), (-1, 0), (0, 1), (0, -1)):\n                next_row, next_column = row + delta_row, column + delta_column\n                if 0 <= next_row < rows and 0 <= next_column < columns:\n                    if not seen[next_row][next_column] and grid[next_row][next_column] == \"1\":\n                        seen[next_row][next_column] = True\n                        queue.append((next_row, next_column))\n\n    islands = 0\n    for row in range(rows):\n        for column in range(columns):\n            if grid[row][column] == \"1\" and not seen[row][column]:\n                islands += 1\n                flood(row, column)\n    return islands\n"
     }
   ],
   "animationSteps": [
@@ -279,39 +365,6 @@
       }
     }
   ],
-  "breakdown": [
-    {
-      "key": "given",
-      "prompt": "What are you handed?",
-      "options": [
-        "A grid of land and water cells",
-        "A list of island coordinates",
-        "A tree where each node is an island"
-      ],
-      "answerIndex": 0,
-      "explanation": "One grid, already laid out with neighbours sitting next to each other. Adjacency is positional, not something stored per cell."
-    },
-    {
-      "key": "asked",
-      "prompt": "What must you hand back?",
-      "options": [
-        "The number of land cells",
-        "The size of the largest island",
-        "The number of separate connected groups of land"
-      ],
-      "answerIndex": 2,
-      "explanation": "A count of connected groups, not of cells and not of the biggest one. A single island can be enormous and still count once."
-    },
-    {
-      "key": "shape",
-      "prompt": "Which neighbours count as connected?",
-      "options": [
-        "Up, down, left and right, but not diagonals",
-        "All eight surrounding cells",
-        "Any two land cells in the same row"
-      ],
-      "answerIndex": 0,
-      "explanation": "Four directions only. That is what decides both what a flood fill must cross and what a diagonally-touching pair of cells means, which is not an island."
-    }
-  ]
+  "entrypoint": "num_islands",
+  "argumentMode": "PLAIN"
 }

@@ -1,10 +1,16 @@
 import type {
+  AttemptCodeState,
   AttemptMode,
   AttemptResponse,
   AuthResponse,
   BreakdownEvaluation,
   BreakdownPrompt,
   CompletionResult,
+  ExecutionResult,
+  HintSelection,
+  HintStage,
+  RevealedSolution,
+  ReviewOutcome,
 } from "@/types/api"
 
 /**
@@ -17,9 +23,10 @@ import type {
  * cookie is same-site, and it is attached without any credentialed-CORS arrangement.
  *
  * <p><b>Only choices are sent.</b> Every request below carries what the learner picked or did:
- * a pattern slug, a hint level, a chosen option index, a complexity string. None of them carry
- * XP, an award, a combo, a mastery score, or a claim that an answer was right. Those arrive in
- * {@link CompletionResult} as facts from the backend, which is the only thing that decides them.
+ * a pattern slug, a hint level, a chosen option index, a complexity string, a source file. None of
+ * them carry XP, an award, a combo, a mastery score, a correctness flag, or a claim that an answer
+ * was right. Those arrive in {@link CompletionResult} and {@link ExecutionResult} as facts from
+ * the backend, which is the only thing that decides them.
  */
 
 const BASE_PATH = "/api/v1"
@@ -212,6 +219,21 @@ export function submitBreakdown(
 export function logout() {
   return post<void>("/auth/logout")
 }
+
+/**
+ * Reviews one mistake.
+ *
+ * The only field is the learner's own judgement of whether they now have it. That is a claim about
+ * their understanding rather than something the backend can verify, and it is not treated as one: it
+ * decides the review interval and nothing else. XP, the review count and the next due date come
+ * back as the server computed them.
+ *
+ * The backend refuses a review that is not due yet, so this cannot be called twice to collect the
+ * award twice.
+ */
+export function reviewMistake(mistakeId: string, correct: boolean) {
+  return post<ReviewOutcome>(`/progress/review/${mistakeId}`, { correct })
+}
 /**
  * The breakdown prompts for a problem.
  *
@@ -224,4 +246,71 @@ export async function fetchBreakdown(slug: string): Promise<BreakdownPrompt[]> {
     `/problems/${slug}/breakdown`,
   )
   return response.prompts
+}
+
+/*
+ * Phase 4: the coding stage.
+ *
+ * Every function below sends a language and a source string, and nothing else. There is no
+ * `passed`, no `outcome`, no `accepted` in anything this module can put on the wire, which is the
+ * point: the backend runs the code and returns what it found. A learner who wants to convince the
+ * server their solution works has to make it work.
+ */
+
+/**
+ * Checks the current code against the visible examples.
+ *
+ * Two request bodies, one record. They are separate functions rather than one with a flag so that
+ * no caller can reach Submit by passing an argument, and so the difference between checking your
+ * work and being done with a problem is visible in the code that calls it.
+ */
+export function runCode(attemptId: string, language: string, code: string) {
+  return post<ExecutionResult>(`/attempts/${attemptId}/code/run`, { language, code })
+}
+
+/** Evaluates against the backend-controlled case set. The only path that can accept a solution. */
+export function submitCode(attemptId: string, language: string, code: string) {
+  return post<ExecutionResult>(`/attempts/${attemptId}/code/submit`, { language, code })
+}
+
+/**
+ * Autosave.
+ *
+ * Decides nothing and returns no verdict, which is why it cannot be mistaken for a Run. It exists
+ * so a refresh does not cost the learner what they had written.
+ */
+export function saveCode(attemptId: string, language: string, code: string) {
+  return post<AttemptCodeState>(`/attempts/${attemptId}/code/save`, { language, code })
+}
+
+/** The saved source and the last verdict, so a reload can restore what was being written. */
+export function fetchCodeState(attemptId: string): Promise<AttemptCodeState> {
+  return send<AttemptCodeState>(`/attempts/${attemptId}/code`)
+}
+
+/**
+ * The next hint for the stage the learner is in.
+ *
+ * Only the stage travels. The trigger is decided by the backend from the last execution it
+ * observed, because a client that could name its own trigger could ask for the debugging ladder
+ * after a passing submission and walk to the answer without ever having failed.
+ */
+export function fetchNextHint(
+  attemptId: string,
+  stage: HintStage = "CODING",
+): Promise<HintSelection | null> {
+  return send<HintSelection | null>(`/attempts/${attemptId}/hint/next?stage=${stage}`)
+}
+
+/**
+ * The reference implementation.
+ *
+ * A POST on purpose. Fetching the answer is an event worth recording, so making it a read would
+ * mean there was either no record or a GET that hands the solution to anyone who guessed the URL.
+ */
+export function revealSolution(
+  attemptId: string,
+  language = "PYTHON",
+): Promise<RevealedSolution> {
+  return post<RevealedSolution>(`/attempts/${attemptId}/solution?language=${language}`)
 }

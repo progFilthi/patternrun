@@ -2,18 +2,26 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import type { AnimationStep, Hint, PatternSummary, ProblemDetail, ProblemSummary } from "@/types/api"
+import type {
+  AnimationStep,
+  AttemptCodeState,
+  Hint,
+  PatternSummary,
+  ProblemDetail,
+  ProblemSummary,
+} from "@/types/api"
 import { AnimationStage } from "@/components/animation/animation-stage"
 import { Button } from "@/components/ui/button"
 import { ProblemBrief } from "@/components/training/problem-brief"
 import { ProblemBreakdown } from "@/components/training/problem-breakdown"
 import { PatternGuess } from "@/components/training/pattern-guess"
 import { HintLadder } from "@/components/training/hint-ladder"
+import { CodePanel } from "@/components/training/code-panel"
 import { ComplexityCheck } from "@/components/training/complexity-check"
 import { ExplanationPanel } from "@/components/training/explanation-panel"
 import { CompletionSummary } from "@/components/training/completion-summary"
 import { SessionProgress } from "@/components/training/session-progress"
-import { COMPLEXITY_OPTIONS, isCorrectChoice } from "@/lib/training/complexity"
+import { isCorrectChoice, optionsFor } from "@/lib/training/complexity"
 import { LAST_PHASE, PHASES, clampPhaseIndex, reachThrough } from "@/lib/training/phases"
 import { useTrainingAttempt } from "@/lib/training/use-training-attempt"
 import { useSession } from "@/components/layout/session-provider"
@@ -29,6 +37,9 @@ import { useSession } from "@/components/layout/session-provider"
  * This component no longer writes progress to local storage, because the backend is the record
  * and a second copy would eventually disagree with it.
  */
+/** What the editor gets when there is no saved code to restore. */
+const EMPTY_CODE_STATE: AttemptCodeState = { accepted: false, hintsUsed: 0 }
+
 export function TrainingSession({
   problem,
   patterns,
@@ -103,6 +114,15 @@ export function TrainingSession({
   const onRetryCompletion = useCallback(() => {
     void attempt.retry()
   }, [attempt])
+
+  /**
+   * Whether the backend accepted the code.
+   *
+   * Read from the result the server returned, never from the editor's contents: the browser cannot
+   * know whether its code passed, and a check written here would be a client-side guess dressed up
+   * as one.
+   */
+  const accepted = state.code?.kind === "SUBMIT" && state.code.outcome === "ACCEPTED"
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 pb-24 pt-8">
@@ -196,7 +216,7 @@ export function TrainingSession({
         {phase === "COMPLEXITY" && (
           <ComplexityCheck
             expected={problem.complexity}
-            options={COMPLEXITY_OPTIONS}
+            options={optionsFor(problem.complexity)}
             timeChoice={timeChoice}
             spaceChoice={spaceChoice}
             checked={complexityChecked}
@@ -207,8 +227,50 @@ export function TrainingSession({
             onTimeChange={setTimeChoice}
             onSpaceChange={setSpaceChoice}
             onCheck={() => setComplexityChecked(true)}
-            onContinue={onComplete}
+            onContinue={() => goToPhase(6)}
           />
+        )}
+
+        {phase === "CODE" && (
+          <section aria-label="Step 7: write the solution" className="flex flex-col gap-8">
+            {problem.runnableEntrypoint ? (
+            <CodePanel
+              attemptId={state.attemptId}
+              entrypoint={problem.runnableEntrypoint}
+              onSave={attempt.persistCode}
+              onRun={attempt.runCode}
+              onSubmit={attempt.submitCode}
+              onHint={attempt.askForHint}
+              onReveal={attempt.revealReference}
+              onHintRead={(level) => void attempt.revealHint(level)}
+              loadState={async () => (await attempt.loadCode()) ?? EMPTY_CODE_STATE}
+            />
+            ) : (
+              /* Nineteen of the twenty problems have display test cases but no structured
+                 arguments, so there is nothing to run their code against. Saying so is better than
+                 an editor that returns a runner failure every time, and better than hiding the
+                 step and leaving the rail promising something it cannot deliver. */
+              <div className="rounded-md border border-dashed p-8 text-center">
+                <h2 className="text-base font-medium">No editor for this problem yet</h2>
+                <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                  Writing code for this one is still being set up. Everything up to here works
+                  exactly as it should, and you can finish the session as usual.
+                </p>
+              </div>
+            )}
+            <div className="flex flex-wrap items-center justify-end gap-4">
+              {state.error && state.phase === "failed" && (
+                <p className="text-sm text-muted-foreground">{state.error}</p>
+              )}
+              {/* Always available. Completing a session without writing code is still a valid
+                  way through the loop — the learner may be here to think, not to type — and
+                  gating it on an accepted submission would change Phase 3's semantics to make
+                  the editor feel load-bearing. */}
+              <Button onClick={onComplete} variant={accepted ? "default" : "outline"}>
+                {accepted ? "Finish and see what this earned" : "Finish without submitting"}
+              </Button>
+            </div>
+          </section>
         )}
 
         {phase === "COMPLETE" && (

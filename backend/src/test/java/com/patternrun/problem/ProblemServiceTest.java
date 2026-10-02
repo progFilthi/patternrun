@@ -3,11 +3,13 @@ package com.patternrun.problem;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.patternrun.common.ResourceNotFoundException;
+import com.patternrun.problem.HintTrigger;
 import com.patternrun.pattern.PatternEntity;
 import com.patternrun.pattern.PatternService;
 import com.patternrun.problem.dto.AnimationStepResponse;
@@ -93,7 +95,8 @@ class ProblemServiceTest {
     void findBySlugReturnsContentCounts() {
         ProblemEntity problem = problem("two-sum", Difficulty.EASY, TrainingDifficulty.RECOGNITION);
         when(problemRepository.findBySlug("two-sum")).thenReturn(Optional.of(problem));
-        when(hintRepository.countByProblemId(problem.getId())).thenReturn(5L);
+        when(hintRepository.countByProblemIdAndStageInAndTrigger(any(), any(), eq(HintTrigger.ANY)))
+                .thenReturn(5L);
         when(animationStepRepository.countByProblemId(problem.getId())).thenReturn(8L);
         when(testCaseRepository.countByProblemIdAndIsHiddenFalse(problem.getId())).thenReturn(2L);
 
@@ -120,7 +123,8 @@ class ProblemServiceTest {
     void findHintsReturnsLadderInOrder() {
         ProblemEntity problem = problem("two-sum", Difficulty.EASY, TrainingDifficulty.RECOGNITION);
         when(problemRepository.findBySlug("two-sum")).thenReturn(Optional.of(problem));
-        when(hintRepository.findByProblemIdOrderByLevelAsc(problem.getId()))
+        when(hintRepository.findByProblemIdAndStageInAndTriggerOrderByLevelAsc(
+                any(), any(), eq(HintTrigger.ANY)))
                 .thenReturn(List.of(hint(1), hint(2)));
 
         List<HintResponse> hints = problemService.findHints("two-sum");

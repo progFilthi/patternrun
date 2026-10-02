@@ -2,6 +2,9 @@ package com.patternrun.content.seed;
 
 import tools.jackson.databind.JsonNode;
 import com.patternrun.problem.AnimationStepType;
+import com.patternrun.problem.ArgumentMode;
+import com.patternrun.problem.HintStage;
+import com.patternrun.problem.HintTrigger;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -44,7 +47,25 @@ public record ProblemSeed(
          * Optional. Only Two Sum carries one so far; a problem without a breakdown still starts
          * and completes, it just cannot earn the breakdown award.
          */
-        List<@Valid BreakdownSeed> breakdown) {
+        List<@Valid BreakdownSeed> breakdown,
+        /**
+         * Optional. The function a runner calls. Absent means the problem is content-only and no
+         * editor is offered.
+         */
+        @Pattern(regexp = "[A-Za-z_][A-Za-z0-9_]*") String entrypoint,
+        /**
+         * Optional. How the runner turns stored arguments into a call. Absent means {@code PLAIN},
+         * which is every problem whose arguments are already the values its function wants.
+         *
+         * {@code TREE} is for the two problems whose data is a level-order array rather than the
+         * object the entrypoint takes, so that a learner is never asked to write deserialisation
+         * around the algorithm they are being asked about.
+         */
+        ArgumentMode argumentMode) {
+
+    public ArgumentMode argumentModeOrPlain() {
+        return argumentMode == null ? ArgumentMode.PLAIN : argumentMode;
+    }
 
     /** Hint ladder levels defined in README section 7. */
     public static final int HINT_LEVELS = 5;
@@ -57,14 +78,57 @@ public record ProblemSeed(
 
     public record HintSeed(
             @Min(1) @Max(HINT_LEVELS) int level,
+            /**
+             * Optional. Absent means {@code ANY}, which is every hint authored before staging
+             * existed and keeps those problems working unchanged.
+             */
+            HintStage stage,
+            /** Optional. Absent means {@code ANY}. */
+            HintTrigger trigger,
             @NotBlank String content) {
+
+        public HintStage stageOrAny() {
+            return stage == null ? HintStage.ANY : stage;
+        }
+
+        public HintTrigger triggerOrAny() {
+            return trigger == null ? HintTrigger.ANY : trigger;
+        }
+
+        /** Whether this rung belongs to the ladder shown before the editor. */
+        public boolean isReasoningRung() {
+            HintStage resolved = stageOrAny();
+            return (resolved == HintStage.ANY || resolved == HintStage.REASONING)
+                    && triggerOrAny() == HintTrigger.ANY;
+        }
     }
 
+    /**
+     * One test case.
+     *
+     * {@code input} and {@code expectedOutput} are prose for a human. {@code call} and
+     * {@code expected} are the runnable form, and they are separate on purpose: parsing
+     * "nums = [2,7,11,15], target = 9" to recover the arguments would make
+     * {@code [-3, 4]} ambiguous with a subtraction and would break the first problem with a
+     * string in it.
+     *
+     * Both are absent for the nineteen problems that are not runnable yet, which is exactly how
+     * the API says so.
+     */
     public record TestCaseSeed(
             @NotBlank String label,
             @NotBlank String input,
             @NotBlank String expectedOutput,
-            boolean hidden) {
+            boolean hidden,
+            /** Positional arguments for the entrypoint. Absent means display-only. */
+            JsonNode call,
+            /** Expected return value, compared structurally. Absent means display-only. */
+            JsonNode expected) {
+
+        /** Whether the runner can execute this case. */
+        public boolean isRunnable() {
+            return call != null && expected != null;
+        }
     }
 
     public record SolutionSeed(

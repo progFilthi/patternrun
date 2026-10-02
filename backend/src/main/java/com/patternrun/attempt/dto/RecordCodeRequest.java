@@ -7,9 +7,16 @@ import jakarta.validation.constraints.Size;
 /**
  * The learner's code, from the editor.
  *
- * Stored, not executed. README section 66 forbids running arbitrary code inside this API, so
- * execution happens in the learner's own browser (Python via Pyodide) and Java waits for an
- * isolated judge. Nothing here is ever evaluated on the server.
+ * Stored, not evaluated. This endpoint is the autosave: it exists so a refresh does not cost a
+ * learner their work, and it writes no outcome and no correctness, because nothing has been decided
+ * when it is called.
+ *
+ * Execution lives on {@code /code/run} and {@code /code/submit}, which take their own request
+ * record. Keeping the two apart means there is no endpoint that both accepts code and returns a
+ * verdict, so nothing about a submission's correctness can be inferred from having been stored.
+ *
+ * {@code language} is still validated as JAVA|PYTHON because the column stores it and Phase 3
+ * already recorded code that way; only Python can actually be executed.
  */
 public record RecordCodeRequest(
         @NotBlank @Pattern(regexp = "JAVA|PYTHON", message = "must be JAVA or PYTHON") String language,

@@ -75,25 +75,61 @@
       "label": "Example 1",
       "input": "s = \"abcabcbb\"",
       "expectedOutput": "3",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        "abcabcbb"
+      ],
+      "expected": 3
     },
     {
       "label": "All identical",
       "input": "s = \"bbbbb\"",
       "expectedOutput": "1",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        "bbbbb"
+      ],
+      "expected": 1
     },
     {
       "label": "All distinct",
       "input": "s = \"abcdefg\"",
       "expectedOutput": "7",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        "abcdefg"
+      ],
+      "expected": 7
+    },
+    {
+      "label": "Empty string",
+      "input": "s = \"\"",
+      "expectedOutput": "0",
+      "hidden": true,
+      "call": [
+        ""
+      ],
+      "expected": 0
+    },
+    {
+      "label": "Whole string repeats",
+      "input": "s = \"dvdf\"",
+      "expectedOutput": "3",
+      "hidden": true,
+      "call": [
+        "dvdf"
+      ],
+      "expected": 3
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int lengthOfLongestSubstring(String s) {\n        int[] counts = new int[128];\n        int left = 0;\n        int best = 0;\n        for (int right = 0; right < s.length(); right++) {\n            char c = s.charAt(right);\n            counts[c]++;\n            while (counts[c] > 1) {\n                counts[s.charAt(left)]--;\n                left++;\n            }\n            best = Math.max(best, right - left + 1);\n        }\n        return best;\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def length_of_longest_substring(s):\n    last_seen = {}\n    best = start = 0\n    for index, character in enumerate(s):\n        if character in last_seen and last_seen[character] >= start:\n            start = last_seen[character] + 1\n        last_seen[character] = index\n        best = max(best, index - start + 1)\n    return best\n"
     }
   ],
   "animationSteps": [
@@ -289,5 +325,7 @@
       "answerIndex": 0,
       "explanation": "A repeat makes any window starting before the earlier copy invalid, so the earliest valid start jumps forward to just past it. That lets a single window sweep left to right without ever moving backwards."
     }
-  ]
+  ],
+  "entrypoint": "length_of_longest_substring",
+  "argumentMode": "PLAIN"
 }

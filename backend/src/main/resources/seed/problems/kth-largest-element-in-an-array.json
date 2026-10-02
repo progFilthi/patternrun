@@ -69,25 +69,97 @@
       "label": "Example 1",
       "input": "nums = [3,2,1,5,6,4], k = 2",
       "expectedOutput": "5",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          3,
+          2,
+          1,
+          5,
+          6,
+          4
+        ],
+        2
+      ],
+      "expected": 5
     },
     {
       "label": "Duplicates",
       "input": "nums = [3,2,3,1,2,4,5,5,6], k = 4",
       "expectedOutput": "4",
-      "hidden": false
+      "hidden": false,
+      "call": [
+        [
+          3,
+          2,
+          3,
+          1,
+          2,
+          4,
+          5,
+          5,
+          6
+        ],
+        4
+      ],
+      "expected": 4
     },
     {
       "label": "k equals length",
       "input": "nums = [7,3,9], k = 3",
       "expectedOutput": "3",
-      "hidden": true
+      "hidden": true,
+      "call": [
+        [
+          7,
+          3,
+          9
+        ],
+        3
+      ],
+      "expected": 3
+    },
+    {
+      "label": "k is one",
+      "input": "nums = [2,1,5,6,3], k = 1",
+      "expectedOutput": "6",
+      "hidden": true,
+      "call": [
+        [
+          2,
+          1,
+          5,
+          6,
+          3
+        ],
+        1
+      ],
+      "expected": 6
+    },
+    {
+      "label": "All equal",
+      "input": "nums = [4,4,4], k = 2",
+      "expectedOutput": "4",
+      "hidden": true,
+      "call": [
+        [
+          4,
+          4,
+          4
+        ],
+        2
+      ],
+      "expected": 4
     }
   ],
   "solutions": [
     {
       "language": "JAVA",
       "code": "class Solution {\n    public int findKthLargest(int[] nums, int k) {\n        PriorityQueue<Integer> heap = new PriorityQueue<>();\n        for (int num : nums) {\n            heap.add(num);\n            if (heap.size() > k) {\n                heap.poll();\n            }\n        }\n        return heap.peek();\n    }\n}"
+    },
+    {
+      "language": "PYTHON",
+      "code": "def find_kth_largest(nums, k):\n    # Quickselect-style partition: O(n) average, and it teaches the same idea the pattern is about.\n    values = list(nums)\n    target = len(values) - k\n    low, high = 0, len(values) - 1\n    while low <= high:\n        pivot = values[high]\n        store = low\n        for index in range(low, high):\n            if values[index] < pivot:\n                values[store], values[index] = values[index], values[store]\n                store += 1\n        values[store], values[high] = values[high], values[store]\n        if store == target:\n            return values[store]\n        if store < target:\n            low = store + 1\n        else:\n            high = store - 1\n    return -1\n"
     }
   ],
   "animationSteps": [
@@ -177,39 +249,6 @@
       }
     }
   ],
-  "breakdown": [
-    {
-      "key": "given",
-      "prompt": "What are you handed?",
-      "options": [
-        "A sorted array and a position",
-        "An unsorted array of integers and an integer k",
-        "A heap of k elements, already built"
-      ],
-      "answerIndex": 1,
-      "explanation": "An unsorted array plus a rank. The ordering is absent and has to be partly recovered, not read off."
-    },
-    {
-      "key": "asked",
-      "prompt": "What must you hand back?",
-      "options": [
-        "The kth largest value in the array",
-        "The kth distinct value in the array",
-        "The k largest values, as an array"
-      ],
-      "answerIndex": 0,
-      "explanation": "One value at rank k. Duplicates count separately, so this is a question about position in the sorted order, not about distinct entries."
-    },
-    {
-      "key": "shape",
-      "prompt": "Does the whole array need sorting to answer this?",
-      "options": [
-        "Yes, sorting is the only way",
-        "No, you only need enough order to place rank k",
-        "Only if k is larger than the array"
-      ],
-      "answerIndex": 1,
-      "explanation": "No. Sorting is one honest answer, but the question only asks about one rank, and partial selection or a bounded heap answers it without paying for a full ordering."
-    }
-  ]
+  "entrypoint": "find_kth_largest",
+  "argumentMode": "PLAIN"
 }

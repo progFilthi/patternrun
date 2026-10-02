@@ -10,7 +10,7 @@ import {
 } from "@/lib/training/phases"
 
 describe("PHASES", () => {
-  it("is the seven phase loop in order", () => {
+  it("is the eight phase loop in order, with coding between complexity and finishing", () => {
     expect(PHASES.map((phase) => phase.id)).toEqual([
       "SCOUT",
       "PATTERN_GUESS",
@@ -18,8 +18,23 @@ describe("PHASES", () => {
       "HINTS",
       "EXPLANATION",
       "COMPLEXITY",
+      "CODE",
       "COMPLETE",
     ])
+  })
+
+  /**
+   * The ordering is a teaching decision, so it is asserted rather than left to the array.
+   *
+   * Complexity is the last thing reasoned about before writing, so the editor has to follow it
+   * directly. Putting CODE before COMPLEXITY would ask for a complexity guess before there was
+   * anything to have guessed about, and putting it after COMPLETE would make it an afterthought
+   * rather than the part of the loop that tests the understanding.
+   */
+  it("puts the editor after the reasoning and before the finish", () => {
+    const ids = PHASES.map((phase) => phase.id)
+    expect(ids.indexOf("CODE")).toBe(ids.indexOf("COMPLEXITY") + 1)
+    expect(ids.indexOf("CODE")).toBe(ids.indexOf("COMPLETE") - 1)
   })
 
   it("gives every phase a label and a unique id", () => {
@@ -72,7 +87,7 @@ describe("clampPhaseIndex", () => {
 describe("isReachable", () => {
   it("offers every phase up to the furthest one", () => {
     const flags = PHASES.map((_, index) => isReachable(index, 2))
-    expect(flags).toEqual([true, true, true, false, false, false, false])
+    expect(flags).toEqual([true, true, true, false, false, false, false, false])
   })
 
   it("locks everything past the furthest phase", () => {
