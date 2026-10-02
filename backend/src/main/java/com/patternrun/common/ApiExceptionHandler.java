@@ -1,5 +1,8 @@
 package com.patternrun.common;
 
+import com.patternrun.security.ConflictException;
+import com.patternrun.security.RateLimitExceededException;
+import com.patternrun.security.UnauthenticatedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
@@ -51,6 +54,34 @@ public class ApiExceptionHandler {
                         .collect(Collectors.joining(", "))
                 : ex.getMessage();
         return build(HttpStatus.BAD_REQUEST, message, request);
+    }
+
+    /**
+     * A live session is required but there was none. Distinct from 403 because the caller is
+     * not forbidden, they are simply not known yet, and the client fixes it by bootstrapping a
+     * session rather than by giving up.
+     */
+    @ExceptionHandler(UnauthenticatedException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnauthenticated(UnauthenticatedException ex,
+                                                                 HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+    }
+
+    /**
+     * Well formed but conflicting: an email already in use, or two tabs both trying to own the
+     * live session for one problem. Distinct from 400 because retrying differently is the
+     * correct response, not retrying the same request.
+     */
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleConflict(ConflictException ex,
+                                                           HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiErrorResponse> handleRateLimit(RateLimitExceededException ex,
+                                                            HttpServletRequest request) {
+        return build(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request);
     }
 
     /** Same error shape for anything unexpected, without exposing internals (README section 90). */

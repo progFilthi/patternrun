@@ -32,6 +32,10 @@ patternrun:
     enabled: ${PATTERN_SEED_ENABLED:true}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+    # The web app proxies /api/v1 through its own origin, so from the browser's point of view
+    # the session cookie is always same-site. That is what lets it stay SameSite=Lax, which is
+    # what makes CSRF protection a framework default rather than code we have to get right.
+    same-origin-frontend: ${SAME_ORIGIN_FRONTEND:true}
 
 logging:
   level:

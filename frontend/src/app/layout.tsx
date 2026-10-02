@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { SessionProvider } from "@/components/layout/session-provider";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -39,10 +40,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="flex min-h-screen flex-col">
-        <AppHeader />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
+        {/* One session for the whole app, established once on load. */}
+        <SessionProvider>
+          <AppHeader />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+        </SessionProvider>
       </body>
     </html>
   );

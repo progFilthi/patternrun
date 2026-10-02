@@ -1,6 +1,13 @@
 /**
- * Anonymous local progress. The API is read only in Phase 2 and there are no accounts, so a
- * completed session is recorded in localStorage only (README sections 73 and 74).
+ * History recovered from the browser, and now read only.
+ *
+ * In Phase 2 this module was the store: sessions were written here because the API had no
+ * write endpoints. Phase 3 made the backend the record, so nothing writes this key any more.
+ * It is kept because the blob in a returning learner's browser predates their account, and
+ * importing it is how that history reaches the server instead of being silently lost.
+ *
+ * Reading is therefore the live path and writing is dead. Kept intact rather than trimmed
+ * because the shape of {@link CompletionRecord} is the contract the import has to satisfy.
  */
 
 export interface CompletionRecord {

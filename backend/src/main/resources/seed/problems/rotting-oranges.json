@@ -315,5 +315,40 @@
         "lesson": "Multi-source BFS answers shortest distance; unreachable cells are the only failure case."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "A grid where each cell is fresh, rotten or empty",
+        "A single rotten orange and its position",
+        "A list of orange positions with timestamps"
+      ],
+      "answerIndex": 0,
+      "explanation": "One grid with three cell states, and empties are neither fresh nor rotten. Empty cells never need to be rotted or counted."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "Which oranges will rot",
+        "The minutes until no fresh orange remains, or -1",
+        "The count of oranges that rotted"
+      ],
+      "answerIndex": 1,
+      "explanation": "A time, not a set. Every rotten cell starts spreading simultaneously, so the answer is how long until the last fresh one is reached."
+    },
+    {
+      "key": "shape",
+      "prompt": "Why does the search have to start from every rotten orange at once?",
+      "options": [
+        "Because rot spreads outward one step per minute from all of them",
+        "Because rotten oranges are sorted by position",
+        "Because only the first one spreads"
+      ],
+      "answerIndex": 0,
+      "explanation": "Rot advances one cell per minute from every rotten orange at the same time, so the arrival time at any cell is its distance from the nearest rotten one. Growing outward level by level gets every cell's time at once."
+    }
   ]
 }

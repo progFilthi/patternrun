@@ -22,6 +22,55 @@ class SeedContentIT extends ApiIntegrationTestBase {
     @Autowired
     private ContentSeeder contentSeeder;
 
+    /**
+     * The reading step is not optional, so its absence has to break the build rather than
+     * quietly leaving one problem in the catalogue with nothing to read.
+     */
+    @Test
+    @DisplayName("Every problem teaches how to read itself")
+    void everyProblemHasAReadingStep() {
+        List<Map<String, Object>> breakdowns = jdbcTemplate.queryForList("""
+                SELECT p.slug            AS slug,
+                       count(*)          AS prompts,
+                       count(DISTINCT prompt ->> 'key') AS distinct_keys
+                  FROM problems p,
+                       jsonb_array_elements(p.breakdown) AS prompt
+                 GROUP BY p.slug
+                 ORDER BY p.slug
+                """);
+
+        assertThat(breakdowns).isNotEmpty();
+        for (Map<String, Object> row : breakdowns) {
+            String slug = (String) row.get("slug");
+            assertThat(((Number) row.get("prompts")).intValue())
+                    .as("%s should have prompts to read before choosing a pattern", slug)
+                    .isEqualTo(3);
+            assertThat(((Number) row.get("distinct_keys")).intValue())
+                    .as("%s should not reuse a prompt key, or a choice would overwrite another", slug)
+                    .isEqualTo(3);
+        }
+    }
+
+    @Test
+    @DisplayName("Every reading prompt has a key somewhere in its options, and an explanation")
+    void everyReadingPromptIsAnswerable() {
+        Integer broken = jdbcTemplate.queryForObject("""
+                SELECT count(*)
+                  FROM problems p,
+                       jsonb_array_elements(p.breakdown) AS prompt
+                 WHERE prompt->>'key' IS NULL
+                    OR prompt->>'prompt' IS NULL
+                    OR prompt->>'explanation' IS NULL
+                    OR jsonb_array_length(prompt->'options') < 3
+                    OR (prompt->>'answerIndex')::int < 0
+                    OR (prompt->>'answerIndex')::int >= jsonb_array_length(prompt->'options')
+                """, Integer.class);
+
+        assertThat(broken)
+                .as("a prompt whose key falls outside its own options can never be answered")
+                .isZero();
+    }
+
     @Test
     @DisplayName("The seed pass is idempotent: running it again changes nothing")
     void seedPassIsIdempotent() {

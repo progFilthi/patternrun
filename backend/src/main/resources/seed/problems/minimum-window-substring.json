@@ -222,5 +222,40 @@
         "message": "Minimum window substring is BANC, length 4."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "One string, and a set of characters",
+        "Two strings, where one specifies what must be covered",
+        "Two strings that are anagrams of each other"
+      ],
+      "answerIndex": 1,
+      "explanation": "Two strings. The second is a specification the first must satisfy, which is why this is not a two-input comparison problem."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The shortest substring of s containing every character of t, duplicates included",
+        "A rearrangement of s that contains t",
+        "The longest common substring of the two"
+      ],
+      "answerIndex": 0,
+      "explanation": "A contiguous piece of the first string that covers the second completely, including its repeated characters. Returning a rearrangement would ignore the word 'substring' entirely."
+    },
+    {
+      "key": "shape",
+      "prompt": "Why do you count what is missing rather than what is present?",
+      "options": [
+        "Because 'contains t' is a requirement, not a tally to match exactly",
+        "Because counting present characters is slower",
+        "Because t is always shorter than s"
+      ],
+      "answerIndex": 0,
+      "explanation": "The window may hold more of a character than t needs, but never fewer. So you track deficits and the window is valid exactly when nothing is missing."
+    }
   ]
 }

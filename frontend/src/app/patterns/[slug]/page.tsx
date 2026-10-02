@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { api, ApiRequestError } from "@/lib/api/client"
 import type { PatternDetail, ProblemSummary } from "@/types/api"
 import { ProblemList } from "@/components/problems/problem-list"
+import { getCompletedSlugs } from "@/lib/api/progress"
 import { PageHeader, Section } from "@/components/layout/page-header"
 
 export const dynamic = "force-dynamic"
@@ -26,6 +27,7 @@ export default async function PatternDetailPage({ params }: PageProps<"/patterns
   const data = await loadPattern(slug)
   if (!data) notFound()
   const { pattern, problems } = data
+  const completedSlugs = await getCompletedSlugs()
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 pb-24 pt-14">
@@ -89,7 +91,7 @@ export default async function PatternDetailPage({ params }: PageProps<"/patterns
           </Link>
         }
       >
-        <ProblemList problems={problems} />
+        <ProblemList problems={problems} completedSlugs={completedSlugs} />
       </Section>
     </div>
   )

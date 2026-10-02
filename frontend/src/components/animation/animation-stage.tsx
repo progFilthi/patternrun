@@ -23,7 +23,15 @@ export function AnimationStage({
   steps: AnimationStep[]
   /** Reported when the walkthrough reaches the last step, so the session can move on. */
   onStepChange?: (stepIndex: number) => void
-  onPrediction?: (optionIndex: number, correct: boolean) => void
+  /**
+   * Reported when a prediction is answered, with the step and the option that was picked.
+   *
+   * Deliberately not carrying whether it was right. The answer is in the step payload, which the
+   * browser already has, and this callback feeds a request to the backend. Passing correctness
+   * here would make it a value a caller could send, and the server judges the answer itself
+   * against the step it already stores.
+   */
+  onPrediction?: (stepOrder: number, optionIndex: number) => void
 }) {
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -61,9 +69,11 @@ export function AnimationStage({
   const handleAnswer = useCallback(
     (optionIndex: number) => {
       setAnswers((current) => ({ ...current, [index]: optionIndex }))
-      onPrediction?.(optionIndex, optionIndex === answerIndex)
+      // Only the choice leaves this component. Correctness stays here, where it is already
+      // known, and is never handed upwards as something a caller might report.
+      onPrediction?.(step?.order ?? index, optionIndex)
     },
-    [answerIndex, index, onPrediction],
+    [index, onPrediction, step],
   )
 
   useEffect(() => {

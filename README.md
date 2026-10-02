@@ -5790,33 +5790,39 @@ Shipped:
 ✓ navigation         clickable phase stepper, breadcrumbs, active route marked in the header
 ✓ responsive         verified at 375, 768 and 1280 with no horizontal overflow
 ✓ states             loading, empty, not found, and a friendly API-asleep error
+✓ frontend tests     52 Vitest tests over the phase gate, the stepper, and the theme rules
 ```
 
-Verified before closing: `npx tsc --noEmit`, `npm run lint` and `npm run build` all pass, and the
-running app was walked in a real browser across every route, both themes and three viewports with
-no console errors.
+Verified before closing: `npx tsc --noEmit`, `npm run lint`, `npm run build` and `npm test` all
+pass, and the running app was walked in a real browser across every route, both themes and three
+viewports with no console errors.
+
+### The rule that matters
+
+The phase stepper's reachable set is derived state whose failure mode is silent: a locked phase
+that looks locked but cannot be reached, or a phase that was earned quietly becoming unreachable
+after the learner steps backwards. Neither shows up in a type check or a build.
+
+So the rule lives in `lib/training/phases.ts` as three pure functions, `clampPhaseIndex`,
+`isReachable` and `reachThrough`, rather than inline in the component, and it is covered by
+tests that assert monotonicity across a whole session. The suite was checked by mutating the
+source: allowing skip-ahead, lowering the ceiling on a backward move, dropping `disabled`, an
+off-by-one in the reported index, and removing `aria-current` were each caught.
+
+Write the test for the behaviour, not for the markup. Two assertions that were wrong on the first
+pass are worth remembering: `currentIndex` 0 is a real state where the first phase is current, and
+a phase behind the learner carries a tick instead of its ordinal.
 
 ### Carried into Phase 3
 
-Two section 143 items are knowingly unmet. They do not affect the shipped behaviour, so the phase
-is closed with them recorded rather than left open:
+One section 143 item is knowingly unmet:
 
 ``` text
-○ frontend tests   no runner, no test files
 ○ deployment       no config, nothing runs outside localhost
 ```
 
-The frontend has three checks, all passing, and none of them catch a behavioural regression: a
-type checker does not notice a stepper that stops navigating, and a build does not notice a colour
-that fails contrast in dark mode. The backend has 37 passing tests and the frontend has none,
-which is the asymmetry worth closing.
-
-First target is `SessionProgress`. Its reachable set is derived state whose failure mode is
-silent: a locked phase that looks locked but cannot be reached, or a reachable phase that quietly
-stops being clickable. Neither shows up in a build.
-
-Deployment is a prerequisite for the free hosting tier, not for local work, so it can land any
-time before that matters.
+This does not affect shipped behaviour. It is a prerequisite for the free hosting tier rather than
+for local work, so it can land any time before that starts to matter.
 
 ## Phase 3 --- Game layer
 
@@ -5824,4 +5830,4 @@ Not started. XP, levels, streaks, pattern mastery, the mistake journal, the revi
 speedrun mode, and the code editor with any execution at all. Everything in section 118 beyond
 the reading order, and every "Not built yet" item in `docs/frontend.md`.
 
-The first two items of work are the carried-over `○` entries above, then the loop itself.
+The first item of work is the carried-over `○` deployment entry above, then the loop itself.

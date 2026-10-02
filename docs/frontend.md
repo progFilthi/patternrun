@@ -4,8 +4,39 @@ The first playable training slice: dashboard, pattern picker, problem list, and 
 training loop for any seeded problem. It is a thin client over the Phase 1 read-only API. All
 content, including every animation, comes from the backend.
 
-Complete. `Phase 2` here means the release stage defined in README section 154, which is the only
-sense the word has in this repository.
+Phase 2 complete. `Phase 2` here means the release stage defined in README section 154, which is
+the only sense the word has in this repository.
+
+## Progress persistence
+
+Phase 2 stored completions in `localStorage`. Phase 3 made the backend the record, and nothing
+writes that key any more. It is still read, because the blob in a returning learner's browser
+predates their account and importing it is how that history reaches the server.
+
+**The browser only ever reports choices.** Every request carries what the learner picked or did:
+a pattern slug, a hint level, a chosen option index, a complexity string. No request carries XP,
+an award, a combo, a mastery score, or a claim that an answer was right. `CompletionResult`
+arrives as a set of facts and is rendered as-is, which is why there is no XP arithmetic anywhere
+in the frontend and nothing that could drift from the ledger.
+
+`AnimationStage.onPrediction` deliberately takes `(stepOrder, optionIndex)` and not a correctness
+flag. The answer is in the step payload the browser already has, so passing a verdict upwards
+would make it a value a caller could send.
+
+## Same origin
+
+The API is proxied through this origin by a `next.config.ts` rewrite rather than called from the
+browser directly. A cookie is only attached to same-site requests, and the frontend and API are on
+different ports in development, which browsers treat as different sites. Calling cross-origin
+would force `SameSite=None`, which forces a CSRF token and a credentialed CORS setup. Proxying
+leaves the cookie `SameSite=Lax`, so CSRF protection is the framework default, and development
+matches production.
+
+## Tests
+
+Vitest with React Testing Library and jsdom. `npm test` runs once, `npm run test:watch` watches.
+Test files sit beside the code they cover as `*.test.ts` / `*.test.tsx`, and `tsconfig.json`
+includes them, so the tests are type-checked by `npm run typecheck` like everything else.
 
 ## Stack
 
@@ -28,10 +59,15 @@ npm run dev            # http://localhost:3000
 
 | Variable | Used by | Default |
 | --- | --- | --- |
-| `API_URL` | server components | `http://localhost:8080` |
-| `NEXT_PUBLIC_API_URL` | browser | `http://localhost:3000` pattern above, see `.env.example` |
+| `API_INTERNAL_URL` | the `/api/v1` rewrite, and server reads | `http://localhost:8080` |
+| `API_URL` | fallback for server reads | `http://localhost:8080` |
+| `NEXT_PUBLIC_API_URL` | fallback only; browser calls are same-origin | see `.env.example` |
 
-Checks: `npm run build`, `npm run lint`, `npx tsc --noEmit`.
+The browser does not use `NEXT_PUBLIC_API_URL` to reach the API. Phase 3 writes go through this
+origin via the rewrite, so the session cookie is same-site and travels without any
+credentialed-CORS arrangement. Set `API_INTERNAL_URL` to the API's reachable address.
+
+Checks: `npm run build`, `npm run lint`, `npm run typecheck`, `npm test`.
 
 ## Routes
 
@@ -82,12 +118,59 @@ scrolls horizontally on narrow screens. The `overflow-x` sits on the `nav`, not 
 the inner scroll container does not clip the document's scrollable overflow, which put a
 horizontal scrollbar on every mobile problem page.
 
+The rules that decide what the rail may offer are pure functions in
+`lib/training/phases.ts`, not inline in the component: `clampPhaseIndex`, `isReachable` and
+`reachThrough`. Keeping them out of the component is what makes the gate testable, and the gate is
+the part worth testing, because its failure mode is silent.
+
 Two other pieces of orientation carry their own weight: `Breadcrumb` on a problem page
 (`Problems > Pattern > Problem`) says which pattern a problem belongs to, and the Explanation
 step is ordered as an argument rather than four equal paragraphs. The invariant is the claim and
 gets the visual weight, the pseudocode is the machine that maintains it, `why it works` and
 `what it beats` are the correctness argument and the rejected alternative, and `say it in one
 sentence` turns it into three beats the learner can recite.
+
+## Tests
+
+Vitest with React Testing Library and jsdom. `npm test` runs once, `npm run test:watch` watches.
+Test files sit beside the code they cover as `*.test.ts` / `*.test.tsx`, and `tsconfig.json`
+includes them, so the tests are type-checked by `npx tsc --noEmit` like everything else.
+
+``` text
+phases.test.ts                    the loop, the clamp, reachability, monotonicity
+session-progress.test.tsx         rendering, locking, onSelect, aria-current, accessible names
+theme.test.ts                     the class, the stored choice, the OS fallback, storage failures
+complexity.test.ts                folding O(n²) and O(n^2) to one answer
+use-training-attempt.test.ts      the wire contract, the phase machine, every failure path
+completion-summary.test.tsx       rendering the backend's verdict and nothing else
+```
+
+The two Phase 3 files carry the rules that matter most. `use-training-attempt.test.ts` asserts on
+request bodies rather than on rendered output, because the security property is about what leaves
+the browser: a change that helpfully started sending `patternCorrect`, or a locally computed total,
+fails there. `completion-summary.test.tsx` asserts that a repeat reads as "No new XP" with an
+explanation rather than as zero, and that a failure shows a reason and never a number.
+
+Two environment notes, both in `src/test-setup.ts`:
+
+- `@vitejs/plugin-react` is not used. It only adds Fast Refresh, which tests do not want, and its
+  current release pulls a Babel toolchain that conflicts with the shadcn dependency tree. Vitest
+  transforms TSX through esbuild, which reads `"jsx": "react-jsx"` from `tsconfig.json`.
+- `localStorage` is polyfilled per file. Node 25 ships a built-in `localStorage` that needs
+  `--localstorage-file`, and Vitest copies it over the working one jsdom provides, leaving an
+  empty object. Without the polyfill any preference-reading component fails for a reason that has
+  nothing to do with the component.
+
+React Testing Library only registers its automatic cleanup when Vitest globals are enabled. This
+suite imports `describe`/`it`/`expect` explicitly, so `cleanup()` is called from an `afterEach` in
+the setup file instead. Without it every `render` appends to the same document and single-element
+queries fail for the wrong reason.
+
+### What is not covered
+
+Vitest cannot render async Server Components, so the data-fetching routes are not unit tested and
+stay covered by walking the running app. Testing them properly is an end-to-end suite, which is
+the natural companion to the tests above once the routes start changing often.
 
 ## AnimationRenderer
 

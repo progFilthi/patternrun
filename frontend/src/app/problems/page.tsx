@@ -2,6 +2,7 @@ import Link from "next/link"
 
 import { api } from "@/lib/api/client"
 import { ProblemList } from "@/components/problems/problem-list"
+import { getCompletedSlugs } from "@/lib/api/progress"
 import { PageHeader } from "@/components/layout/page-header"
 
 export const metadata = { title: "Problems" }
@@ -11,9 +12,10 @@ export default async function ProblemsPage({ searchParams }: PageProps<"/problem
   const { pattern: rawPattern } = await searchParams
   // A repeated query parameter arrives as an array; only the first value is meaningful.
   const pattern = (Array.isArray(rawPattern) ? rawPattern[0] : rawPattern) ?? ""
-  const [patterns, page] = await Promise.all([
+  const [patterns, page, completedSlugs] = await Promise.all([
     api.listPatterns(),
     api.listProblems({ pattern: pattern || undefined, size: 100 }),
+    getCompletedSlugs(),
   ])
 
   return (
@@ -40,7 +42,7 @@ export default async function ProblemsPage({ searchParams }: PageProps<"/problem
       </nav>
 
       <div className="mt-10">
-        <ProblemList problems={page.content} />
+        <ProblemList problems={page.content} completedSlugs={completedSlugs} />
       </div>
     </div>
   )

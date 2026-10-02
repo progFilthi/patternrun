@@ -8,7 +8,20 @@ export function isCorrectChoice(choice: string | null, expected: string): boolea
   return normalize(choice) === normalize(expected)
 }
 
-/** Treats "O(n²)" and "O(n^2)" as the same answer. */
+/**
+ * Folds both spellings of a complexity to one canonical form.
+ *
+ * The options are written with superscripts ("O(n²)") and the seeded answers with carets
+ * ("O(n^2)"), so folding only the caret left the two unequal. That made the correct answer
+ * unreachable on any quadratic problem: the learner picked the right one and was told they were
+ * wrong, losing the complexity award and the correctness half of their mastery. The backend
+ * applies the identical rule, so the two can never disagree about what "correct" means.
+ */
 function normalize(value: string): string {
-  return value.trim().toLowerCase().replace("^", "")
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\u00b2/g, "2")
+    .replace(/\u00b3/g, "3")
+    .replace("^", "")
 }

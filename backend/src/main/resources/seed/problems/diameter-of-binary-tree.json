@@ -185,5 +185,40 @@
         "message": "Diameter is 4 edges."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "A binary tree given as an array",
+        "The root node of a binary tree, which may be empty",
+        "A list of every node in the tree"
+      ],
+      "answerIndex": 1,
+      "explanation": "Just the root. The shape below it is only discoverable by walking the structure, so there is no array to index."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The height of the tree",
+        "The longest root-to-leaf path, in nodes",
+        "The longest path between any two nodes, in edges"
+      ],
+      "answerIndex": 2,
+      "explanation": "Between any two nodes, counted in edges, and the path is explicitly allowed not to touch the root. Both details push this away from a plain depth calculation."
+    },
+    {
+      "key": "shape",
+      "prompt": "Where does the longest path have to pass through?",
+      "options": [
+        "The root, always",
+        "Some node, where it splits into a left branch and a right branch",
+        "A leaf, always"
+      ],
+      "answerIndex": 1,
+      "explanation": "Every path has a highest node on it, and from there it runs down one branch and up another. So for each node, the best path through it is the deepest path down its left plus the deepest path down its right."
+    }
   ]
 }

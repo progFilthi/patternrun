@@ -183,5 +183,40 @@
         "message": "Answer [1, 1, 4, 2, 1, 1, 0, 0] computed with each index pushed and popped once."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "Temperatures for consecutive days, in order",
+        "Unsorted temperatures with no dates attached",
+        "A stream of temperatures arriving without end"
+      ],
+      "answerIndex": 0,
+      "explanation": "A fixed array already in day order. The order is given, so the answer can lean on what comes later in the array."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The next warmer temperature for each day",
+        "For each day, how many days until a warmer day, or 0",
+        "The length of the longest warm spell"
+      ],
+      "answerIndex": 1,
+      "explanation": "A wait, per day, measured in days, with 0 standing in for 'never'. Not the warmer temperature itself, and not one answer."
+    },
+    {
+      "key": "shape",
+      "prompt": "Why is a stack a natural fit rather than a forward scan?",
+      "options": [
+        "Every answer is about a day that comes later",
+        "Stacks are the only structure that can be indexed",
+        "The temperatures are sorted already"
+      ],
+      "answerIndex": 0,
+      "explanation": "Each question is 'when does it next get warmer', which points forward in time. Resolving that backwards lets days that are still waiting stack up together, and each is resolved exactly once when a warmer day finally arrives."
+    }
   ]
 }

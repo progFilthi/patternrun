@@ -95,6 +95,7 @@ public class SeedContentReader {
             validateHintLadder(problem);
             validateTestCasesAndSolution(problem);
             validateAnimationSteps(problem);
+            validateBreakdown(problem);
         }
     }
 
@@ -188,6 +189,40 @@ public class SeedContentReader {
         if (!hasQuestion) {
             throw new SeedContentException("Problem " + problem.slug()
                     + " needs a QUESTION step (predict the move, README section 8)");
+        }
+    }
+
+    /**
+     * A breakdown is only worth asking if every prompt has a real answer to check against.
+     *
+     * An out-of-range or missing {@code answerIndex} would make a prompt permanently
+     * unanswerable, and it would do so silently: the learner would pick something, be told they
+     * were wrong, and have no way to know the content was broken. That is the worst possible
+     * failure for a step whose whole job is teaching reading, so it fails startup instead.
+     */
+    private void validateBreakdown(ProblemSeed problem) {
+        List<ProblemSeed.BreakdownSeed> breakdown = problem.breakdown();
+        if (breakdown == null || breakdown.isEmpty()) {
+            return;
+        }
+
+        Set<String> keys = new HashSet<>();
+        for (ProblemSeed.BreakdownSeed prompt : breakdown) {
+            if (!keys.add(prompt.key())) {
+                throw new SeedContentException(
+                        "Duplicate breakdown key " + prompt.key() + " in " + problem.slug());
+            }
+            if (prompt.options().size() < 2) {
+                throw new SeedContentException(
+                        "Breakdown " + prompt.key() + " in " + problem.slug() + " needs two options");
+            }
+            if (prompt.answerIndex() == null
+                    || prompt.answerIndex() < 0
+                    || prompt.answerIndex() >= prompt.options().size()) {
+                throw new SeedContentException(
+                        "Breakdown " + prompt.key() + " in " + problem.slug()
+                                + " has no answer among its options");
+            }
         }
     }
 }

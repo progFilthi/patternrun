@@ -6,6 +6,7 @@ import com.patternrun.content.seed.PatternSeed;
 import com.patternrun.content.seed.ProblemSeed;
 import com.patternrun.content.seed.SeedContent;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -104,8 +105,8 @@ public class ContentSeeder implements ApplicationRunner {
                         INSERT INTO problems (external_id, slug, title, difficulty, training_difficulty, statement,
                                               constraints, why_this_pattern, brute_force, invariant, pseudocode,
                                               common_mistakes, interview_explanation, time_complexity,
-                                              space_complexity, primary_pattern_id)
-                        VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?)
+                                              space_complexity, primary_pattern_id, breakdown)
+                        VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?, ?::jsonb)
                         RETURNING id
                         """,
                 UUID.class,
@@ -124,7 +125,8 @@ public class ContentSeeder implements ApplicationRunner {
                 problem.interviewExplanation(),
                 problem.timeComplexity(),
                 problem.spaceComplexity(),
-                patternIds.get(problem.primaryPattern()));
+                patternIds.get(problem.primaryPattern()),
+                json(toBreakdownPrompts(problem.breakdown())));
 
         insertSecondaryPatterns(patternIds, problem, problemId);
         insertExamples(problem, problemId);
@@ -132,6 +134,27 @@ public class ContentSeeder implements ApplicationRunner {
         insertAnimationSteps(problem, problemId);
         insertTestCases(problem, problemId);
         insertSolutions(problem, problemId);
+    }
+
+    /**
+     * Maps the seed records onto the stored shape.
+     *
+     * A problem with no breakdown seeds an empty list rather than null, so the column's NOT NULL
+     * holds and the read endpoint can treat "no breakdown" as "nothing to ask" instead of
+     * branching on absence.
+     */
+    private static List<Map<String, Object>> toBreakdownPrompts(List<ProblemSeed.BreakdownSeed> breakdown) {
+        if (breakdown == null) {
+            return List.of();
+        }
+        return breakdown.stream()
+                .map(prompt -> Map.<String, Object>of(
+                        "key", prompt.key(),
+                        "prompt", prompt.prompt(),
+                        "options", prompt.options(),
+                        "answerIndex", prompt.answerIndex(),
+                        "explanation", prompt.explanation()))
+                .toList();
     }
 
     private void insertSecondaryPatterns(Map<String, UUID> patternIds, ProblemSeed problem, UUID problemId) {

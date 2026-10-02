@@ -218,5 +218,40 @@
         "message": "Two unique triplets returned in O(n^2) time."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "One integer array, with no target",
+        "Three arrays to pick one element from each",
+        "An array already known to contain a zero-sum triplet"
+      ],
+      "answerIndex": 0,
+      "explanation": "A single array and nothing else. There is no target to hit, which is the whole difference from Two Sum: the sum you need is fixed at zero."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The indices of one zero-sum triplet",
+        "Every unique zero-sum triplet, with no duplicates",
+        "How many zero-sum triplets exist"
+      ],
+      "answerIndex": 1,
+      "explanation": "All of them, not one, and each listed once. Returning a single triplet would answer a different and much easier question."
+    },
+    {
+      "key": "shape",
+      "prompt": "Why is sorting the array the useful first move?",
+      "options": [
+        "So the numbers are easier to compare",
+        "So sorting alone produces the answer",
+        "Because it does not need sorting at all"
+      ],
+      "answerIndex": 0,
+      "explanation": "Sorted, each value's complements sit together, so two pointers can walk inward and skip duplicates by jumping over runs of equal values rather than reporting them again."
+    }
   ]
 }

@@ -254,5 +254,40 @@
         "message": "Longest substring without repeating characters has length 3."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "One string, with letters and digits only",
+        "Two strings to compare character by character",
+        "An array of characters with their positions"
+      ],
+      "answerIndex": 0,
+      "explanation": "A single string. Nothing needs matching against anything else, which rules out the compare-two-inputs family of problems."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The longest substring itself",
+        "The length of the longest substring without repeats",
+        "The count of distinct characters in the string"
+      ],
+      "answerIndex": 1,
+      "explanation": "A length, and only over contiguous runs. A subsequence would be a different problem with a very different feel, so the word 'substring' is load-bearing."
+    },
+    {
+      "key": "shape",
+      "prompt": "Why does a window work instead of checking every substring?",
+      "options": [
+        "Once a repeat appears, the answer's best start is the position after the previous copy",
+        "Every substring has a unique set of characters",
+        "Windows can be checked in constant time each"
+      ],
+      "answerIndex": 0,
+      "explanation": "A repeat makes any window starting before the earlier copy invalid, so the earliest valid start jumps forward to just past it. That lets a single window sweep left to right without ever moving backwards."
+    }
   ]
 }

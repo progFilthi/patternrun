@@ -174,5 +174,40 @@
         "message": "All spans reported in O(1) amortized time per call."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What arrives at you over time?",
+      "options": [
+        "A fixed array of prices, all at once",
+        "A stream of prices, one call per day",
+        "A single price to analyse repeatedly"
+      ],
+      "answerIndex": 1,
+      "explanation": "A stream, one price per call. The question is asked again each day about a window that includes days already gone."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The highest price seen so far",
+        "For today, the run of consecutive past days that were not higher",
+        "The average price of the last month"
+      ],
+      "answerIndex": 1,
+      "explanation": "A count of consecutive previous days. Note it is not 'how many days since the last high' and not 'the longest run ever'."
+    },
+    {
+      "key": "shape",
+      "prompt": "What does each call to next have to do, and what must it not do?",
+      "options": [
+        "Report the span in O(1) amortized time, keeping state across calls",
+        "Rescan every earlier price on each call",
+        "Sort all prices seen so far on each call"
+      ],
+      "answerIndex": 0,
+      "explanation": "It has to be O(1) amortized, which rules out rescanning. That is only possible by carrying state: whenever a new price is no higher than the top of the stack, that top's span is finished and folds into the new one."
+    }
   ]
 }

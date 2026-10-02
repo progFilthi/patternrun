@@ -176,5 +176,40 @@
         "message": "kth largest is 5, found in one pass with a heap of size k."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "A sorted array and a position",
+        "An unsorted array of integers and an integer k",
+        "A heap of k elements, already built"
+      ],
+      "answerIndex": 1,
+      "explanation": "An unsorted array plus a rank. The ordering is absent and has to be partly recovered, not read off."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The kth largest value in the array",
+        "The kth distinct value in the array",
+        "The k largest values, as an array"
+      ],
+      "answerIndex": 0,
+      "explanation": "One value at rank k. Duplicates count separately, so this is a question about position in the sorted order, not about distinct entries."
+    },
+    {
+      "key": "shape",
+      "prompt": "Does the whole array need sorting to answer this?",
+      "options": [
+        "Yes, sorting is the only way",
+        "No, you only need enough order to place rank k",
+        "Only if k is larger than the array"
+      ],
+      "answerIndex": 1,
+      "explanation": "No. Sorting is one honest answer, but the question only asks about one rank, and partial selection or a bounded heap answers it without paying for a full ordering."
+    }
   ]
 }

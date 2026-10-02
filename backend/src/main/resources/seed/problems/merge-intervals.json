@@ -245,5 +245,40 @@
         "message": "Three merged intervals returned."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "Intervals already sorted by start",
+        "Unsorted intervals, each a pair of endpoints",
+        "A set of points on a line"
+      ],
+      "answerIndex": 1,
+      "explanation": "Unsorted [start, end] pairs. The order carries no meaning, so something has to put them in line before they can be combined."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The single longest interval",
+        "The total length covered by all intervals",
+        "Non-overlapping intervals covering all of the input"
+      ],
+      "answerIndex": 2,
+      "explanation": "A merged set that still covers every input interval. Returning a total length instead would throw away the structure the answer is made of."
+    },
+    {
+      "key": "shape",
+      "prompt": "When do two intervals count as overlapping?",
+      "options": [
+        "Only when one sits strictly inside the other",
+        "When the next start is at or before the current end",
+        "Only when they share an endpoint exactly"
+      ],
+      "answerIndex": 1,
+      "explanation": "Touching counts as overlap, since intervals are continuous. So if the next start is less than or equal to where the current one ends, the two are one interval with the later end."
+    }
   ]
 }

@@ -2,6 +2,7 @@ package com.patternrun.problem;
 
 import com.patternrun.common.PageResponse;
 import com.patternrun.problem.dto.AnimationStepResponse;
+import com.patternrun.problem.dto.BreakdownResponse;
 import com.patternrun.problem.dto.HintResponse;
 import com.patternrun.problem.dto.ProblemDetailResponse;
 import com.patternrun.problem.dto.ProblemSummaryResponse;
@@ -44,6 +45,18 @@ public class ProblemController {
     @GetMapping("/{slug}")
     public ProblemDetailResponse findBySlug(@PathVariable String slug) {
         return problemService.findBySlug(slug);
+    }
+
+    /**
+     * The prompts that break the statement down into what is given, what is asked and which
+     * constraint matters.
+     *
+     * Returns no answer index and no explanation. Those come back from the attempt endpoint once
+     * the learner has committed.
+     */
+    @GetMapping("/{slug}/breakdown")
+    public BreakdownResponse breakdown(@PathVariable String slug) {
+        return problemService.findBreakdown(slug);
     }
 
     @GetMapping("/{slug}/hints")

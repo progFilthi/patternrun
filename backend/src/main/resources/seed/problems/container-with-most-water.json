@@ -215,5 +215,40 @@
         "message": "Maximum area 49 with pointers at index 1 and 8."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What do the numbers in the array represent?",
+      "options": [
+        "Widths of containers laid side by side",
+        "Heights on the y-axis, one per index",
+        "The amount of water in each container"
+      ],
+      "answerIndex": 1,
+      "explanation": "Heights, with the index acting as the x-coordinate. The distance between two lines is what supplies the width, which is not given to you anywhere."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The indices of the two lines forming the container",
+        "The maximum area, as a number",
+        "Every pair of lines and its area"
+      ],
+      "answerIndex": 1,
+      "explanation": "One number: the best area. You are not asked which pair wins, so the search can commit to a direction without recording its choices."
+    },
+    {
+      "key": "shape",
+      "prompt": "When the two ends disagree about height, which one do you move?",
+      "options": [
+        "The taller one, to find more height",
+        "The shorter one, because width is already at its cheapest here",
+        "Whichever is closer to the middle"
+      ],
+      "answerIndex": 1,
+      "explanation": "The shorter one. Moving the taller end keeps the same bottleneck while losing width, so it cannot beat what you already have; moving the shorter end is the only move that can."
+    }
   ]
 }

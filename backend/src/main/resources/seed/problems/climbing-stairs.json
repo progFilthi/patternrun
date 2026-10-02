@@ -199,5 +199,40 @@
         "message": "climbStairs(5) = 8 in O(n) time and O(1) space."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "A staircase, as a list of step heights",
+        "A single integer n, the number of steps",
+        "An array of the ways to reach each step"
+      ],
+      "answerIndex": 1,
+      "explanation": "Just the count of steps. The staircase is not given as a structure, so there is nothing to traverse and nothing to store."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The number of distinct ways to reach the top",
+        "The shortest route to the top",
+        "The step you land on last"
+      ],
+      "answerIndex": 0,
+      "explanation": "A count of routes, not a route. That is why the natural answer is a number rather than a sequence, and why two smaller answers have to be added together."
+    },
+    {
+      "key": "shape",
+      "prompt": "What makes the answer to step n depend on exactly two earlier steps?",
+      "options": [
+        "The final move is either one step or two steps",
+        "Steps must be taken in numerical order",
+        "Every route must use the same number of twos"
+      ],
+      "answerIndex": 0,
+      "explanation": "Landing on n means arriving from n-1 or from n-2, and nothing else, so the count at n is the sum of those two counts. That recurrence is the whole problem."
+    }
   ]
 }

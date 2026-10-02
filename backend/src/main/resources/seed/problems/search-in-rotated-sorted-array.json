@@ -257,5 +257,40 @@
         "message": "Answer -1 after three binary search steps."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "A sorted array and a target value",
+        "An ascending array rotated at an unknown pivot, values unique, plus a target",
+        "An unsorted array and a target value"
+      ],
+      "answerIndex": 1,
+      "explanation": "A rotated ascending array of distinct values, plus the target. It is a binary search problem with one extra piece of damage, not a general search problem."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The index of the target, or -1",
+        "The target value, or -1",
+        "The index of the rotation pivot"
+      ],
+      "answerIndex": 0,
+      "explanation": "A position, or -1 when absent. Returning the value instead would be undefined on exactly the case that matters most."
+    },
+    {
+      "key": "shape",
+      "prompt": "What has to be true at every step to keep this O(log n)?",
+      "options": [
+        "At least one half of the remaining range is sorted",
+        "The midpoint always holds the target",
+        "The array must be rotated at the midpoint"
+      ],
+      "answerIndex": 0,
+      "explanation": "Halving every step is the requirement. What survives the rotation is that one half of the range is always sorted, so you can tell from the midpoint which half holds the target and discard the other."
+    }
   ]
 }

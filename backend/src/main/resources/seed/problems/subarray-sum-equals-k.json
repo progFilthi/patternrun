@@ -240,5 +240,40 @@
         "message": "Every subarray was found with a single pass, no nested loops."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "An array of non-negative numbers and a target",
+        "An array that may contain negative numbers, and a target sum",
+        "An array of prefix sums, already computed"
+      ],
+      "answerIndex": 1,
+      "explanation": "The numbers may be negative. That single fact is what closes off the sliding window, because the window stops being monotone."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "One subarray whose sum equals k",
+        "How many contiguous subarrays sum to k",
+        "The indices of the longest such subarray"
+      ],
+      "answerIndex": 1,
+      "explanation": "A count over all subarrays, not one example and not the longest. Two identical values in different places count separately."
+    },
+    {
+      "key": "shape",
+      "prompt": "Why does a sliding window fail here?",
+      "options": [
+        "Because with negative numbers, extending a window can lower its sum",
+        "Because the window would be too slow",
+        "Because the numbers are not integers"
+      ],
+      "answerIndex": 0,
+      "explanation": "Shrinking on a sum that is too large assumes the sum only grows as you extend, which negative numbers break. Working in prefix sums instead turns the question into counting earlier prefixes that differ by exactly k."
+    }
   ]
 }

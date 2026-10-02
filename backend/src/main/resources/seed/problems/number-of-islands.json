@@ -278,5 +278,40 @@
         "message": "Number of islands is 3."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "A grid of land and water cells",
+        "A list of island coordinates",
+        "A tree where each node is an island"
+      ],
+      "answerIndex": 0,
+      "explanation": "One grid, already laid out with neighbours sitting next to each other. Adjacency is positional, not something stored per cell."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The number of land cells",
+        "The size of the largest island",
+        "The number of separate connected groups of land"
+      ],
+      "answerIndex": 2,
+      "explanation": "A count of connected groups, not of cells and not of the biggest one. A single island can be enormous and still count once."
+    },
+    {
+      "key": "shape",
+      "prompt": "Which neighbours count as connected?",
+      "options": [
+        "Up, down, left and right, but not diagonals",
+        "All eight surrounding cells",
+        "Any two land cells in the same row"
+      ],
+      "answerIndex": 0,
+      "explanation": "Four directions only. That is what decides both what a flood fill must cross and what a diagonally-touching pair of cells means, which is not an island."
+    }
   ]
 }

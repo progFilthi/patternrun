@@ -3,6 +3,7 @@ package com.patternrun.problem;
 import com.patternrun.common.ResourceNotFoundException;
 import com.patternrun.pattern.PatternService;
 import com.patternrun.problem.dto.AnimationStepResponse;
+import com.patternrun.problem.dto.BreakdownResponse;
 import com.patternrun.problem.dto.HintResponse;
 import com.patternrun.problem.dto.ProblemDetailResponse;
 import com.patternrun.problem.dto.ProblemSummaryResponse;
@@ -62,6 +63,24 @@ public class ProblemService {
                 hintRepository.countByProblemId(problem.getId()),
                 animationStepRepository.countByProblemId(problem.getId()),
                 testCaseRepository.countByProblemIdAndIsHiddenFalse(problem.getId()));
+    }
+
+    /**
+     * The prompts that break the statement down into what is given, what is asked and which
+     * constraint matters.
+     *
+     * Answer indices and explanations are projected away. They come back from the attempt
+     * endpoint once the learner has committed, so serving them here would let the browser read
+     * the key out of the response before trying.
+     */
+    public BreakdownResponse findBreakdown(String slug) {
+        List<BreakdownPrompt> prompts = problemRepository.findBySlug(slug)
+                .map(ProblemEntity::getBreakdown)
+                .orElseThrow(() -> new ResourceNotFoundException("Problem not found: " + slug));
+        if (prompts.isEmpty()) {
+            throw new ResourceNotFoundException("No breakdown for problem: " + slug);
+        }
+        return BreakdownResponse.of(slug, prompts);
     }
 
     public List<HintResponse> findHints(String slug) {

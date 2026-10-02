@@ -36,6 +36,19 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!--
+          Password hashing only, deliberately not spring-boot-starter-security.
+
+          The crypto module supplies the password encoders and nothing else, so there is no
+          auto-configured filter chain, no default user and no CSRF behaviour to reason about.
+          Sessions are issued as first-class rows in user_sessions and resolved by our own
+          filter, which keeps the whole mechanism visible in this codebase.
+        -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
         <!-- Spring Boot 4 ships auto-configurations as separate modules; Flyway's lives here. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

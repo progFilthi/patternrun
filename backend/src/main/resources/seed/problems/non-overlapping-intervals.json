@@ -264,5 +264,40 @@
         "message": "Minimum removals is 1."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "Intervals already sorted by start",
+        "Unsorted intervals, each a pair of endpoints",
+        "Intervals that are already disjoint"
+      ],
+      "answerIndex": 1,
+      "explanation": "Unsorted intervals, and they may well all overlap. The ordering has to be imposed before the choice can be made."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "Which intervals to keep",
+        "The total length of the intervals you can keep",
+        "The minimum number of intervals to remove so none overlap"
+      ],
+      "answerIndex": 2,
+      "explanation": "A removal count, so the answer is a number rather than a selection. Nothing may be altered, only dropped."
+    },
+    {
+      "key": "shape",
+      "prompt": "Once sorted, what makes one interval the better one to keep?",
+      "options": [
+        "The one that starts earlier",
+        "The one that ends earlier, leaving more room for the rest",
+        "The longer one, covering more ground"
+      ],
+      "answerIndex": 1,
+      "explanation": "Keeping an interval rules out every interval that has not yet started by its end. The earlier end leaves the most room, so it can never be the worse choice."
+    }
   ]
 }

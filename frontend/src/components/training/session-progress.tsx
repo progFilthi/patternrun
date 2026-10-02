@@ -1,5 +1,7 @@
 import { Check } from "lucide-react"
 
+import { isReachable as phaseIsReachable } from "@/lib/training/phases"
+
 /**
  * Stepper for the seven training phases (README section 60).
  *
@@ -31,7 +33,7 @@ export function SessionProgress({
       <ol className="flex w-max items-center gap-1 py-2.5 text-xs">
         {phases.map((phase, index) => {
           const isCurrent = index === currentIndex
-          const isReachable = index <= reachableIndex
+          const isReachable = phaseIsReachable(index, reachableIndex)
           const isDone = index < currentIndex
 
           return (

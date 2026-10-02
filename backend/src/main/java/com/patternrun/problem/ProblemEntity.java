@@ -60,6 +60,14 @@ public class ProblemEntity {
     @Column(nullable = false)
     private List<String> constraints = new ArrayList<>();
 
+    /**
+     * Prompts that break the statement down into what is given, what is asked and which
+     * constraint matters. Empty until the remaining problems are authored.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false)
+    private List<BreakdownPrompt> breakdown = new ArrayList<>();
+
     @Column(name = "why_this_pattern", nullable = false)
     private String whyThisPattern;
 

@@ -200,5 +200,40 @@
         "message": "Top 2 frequent elements returned: 1 and 2."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "An array and a value k",
+        "An array of numbers and how many distinct values you want",
+        "A map already built from the array"
+      ],
+      "answerIndex": 1,
+      "explanation": "The raw array plus a count k. Nothing has been counted yet, and k limits how many distinct values come back."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The k most frequent values, in any order",
+        "The k values that appear first in the array",
+        "The values that appear more than once"
+      ],
+      "answerIndex": 0,
+      "explanation": "Ranked by how often they occur, and order does not matter. So the value itself is the answer, not its position."
+    },
+    {
+      "key": "shape",
+      "prompt": "What does frequency depend on?",
+      "options": [
+        "The value, counted across the whole array",
+        "Where the value sits in the array",
+        "How large the value is"
+      ],
+      "answerIndex": 0,
+      "explanation": "Frequency is a property of the value alone, so it can be tallied in one pass. Ranking by that tally is a separate, smaller step on a much smaller set."
+    }
   ]
 }

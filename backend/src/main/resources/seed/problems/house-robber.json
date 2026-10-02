@@ -204,5 +204,40 @@
         "message": "Maximum rob amount is 12."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What do the numbers in the array represent?",
+      "options": [
+        "Money in houses along a street, one per house",
+        "Money already taken from each house",
+        "Alarm sensitivity of each house"
+      ],
+      "answerIndex": 0,
+      "explanation": "The take available from each house, in street order. Adjacency is given by the order, which is the only thing the constraint cares about."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "Which houses to rob, in order",
+        "The maximum total money without robbing neighbours",
+        "The number of houses that can be robbed"
+      ],
+      "answerIndex": 1,
+      "explanation": "A maximum total, not a schedule. So there is no reason to remember which houses won, only how much the best choice so far is worth."
+    },
+    {
+      "key": "shape",
+      "prompt": "Why does taking a house force you to skip its neighbour?",
+      "options": [
+        "Because the police are watching in pairs of houses",
+        "Because the constraint forbids taking two adjacent houses",
+        "Because neighbours split the money"
+      ],
+      "answerIndex": 1,
+      "explanation": "That is the whole rule, and it means the best plan through house i either takes i and stops at i-1, or skips i and keeps the best through i-1."
+    }
   ]
 }

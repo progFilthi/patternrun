@@ -229,5 +229,43 @@
         "message": "Answer [0, 1] found after scanning 2 of 4 elements."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "An array of integers and one target integer",
+        "A sorted array of pairs",
+        "A list of already-sorted numbers",
+        "A stream of numbers with no target"
+      ],
+      "answerIndex": 0,
+      "explanation": "One array, nums, plus a single target. There is no second array to compare against, which is why the answer has to come from inside nums itself."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The two values that add up to the target",
+        "The indices of the two values that add up to the target",
+        "The count of pairs that add up to the target",
+        "Whether any pair adds up to the target"
+      ],
+      "answerIndex": 1,
+      "explanation": "Indices, not values. The problem is about positions, so anything that returns numbers instead of positions is answering a different question."
+    },
+    {
+      "key": "shape",
+      "prompt": "Which constraint actually narrows the problem?",
+      "options": [
+        "nums may contain negative numbers",
+        "Exactly one answer exists, and you may not use the same element twice",
+        "The target is always positive",
+        "nums can be very large"
+      ],
+      "answerIndex": 1,
+      "explanation": "One answer and no self-matching element is the constraint that shapes the whole solution. It is why you look for the complement before you store the current number."
+    }
   ]
 }

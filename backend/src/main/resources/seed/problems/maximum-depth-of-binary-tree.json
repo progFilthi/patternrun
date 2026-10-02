@@ -197,5 +197,40 @@
         "message": "Maximum depth is 3."
       }
     }
+  ],
+  "breakdown": [
+    {
+      "key": "given",
+      "prompt": "What are you handed?",
+      "options": [
+        "The root of a binary tree, possibly empty",
+        "A tree given level by level as arrays",
+        "The depth of each node"
+      ],
+      "answerIndex": 0,
+      "explanation": "Only the root. Its depth has to come from the structure below it, and the empty tree is a real input rather than an error."
+    },
+    {
+      "key": "asked",
+      "prompt": "What must you hand back?",
+      "options": [
+        "The number of nodes on the longest root-to-leaf path",
+        "The number of edges on that path",
+        "The number of leaves in the tree"
+      ],
+      "answerIndex": 0,
+      "explanation": "Counted in nodes, so a single node has depth 1 and only an empty tree has depth 0. Getting that off-by-one right is most of this problem."
+    },
+    {
+      "key": "shape",
+      "prompt": "How does the depth at a node relate to its children?",
+      "options": [
+        "It is one more than the greater of the children's depths",
+        "It is the sum of the children's depths",
+        "It is one more than the smaller of the children's depths"
+      ],
+      "answerIndex": 0,
+      "explanation": "Depth grows by exactly one per level, and a node's depth comes from whichever side reaches further down. Taking the larger of the two is the whole recurrence."
+    }
   ]
 }
